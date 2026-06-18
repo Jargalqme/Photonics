@@ -1,0 +1,6 @@
+# top-most EditorConfig file
+root = true
+
+# first-party C/C++ source files
+[{Core,Source}/**.{h,cpp}]
+charset = utf-8-bom

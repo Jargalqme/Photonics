@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>74a1d332-6b31-47b6-ae3c-06010d1b8538</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dds;dlg;fbx;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{67ce9d37-963e-41a0-9977-fa6a68e892f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{0779241f-5176-449f-863c-eba79e0dbba9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio">
+      <UniqueIdentifier>{09f88c8d-a60a-485b-94e4-0a089df4bc85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{fa3e7da7-1782-43db-ab92-9e21a50d9504}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{92e8d192-ff71-4d91-bdc2-c982c5455198}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Weapon">
+      <UniqueIdentifier>{aeb4da6f-a85e-4b15-8321-f46cb773bf3b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\Services\InputManager.h" />
+    <ClInclude Include="Source\UI\GameUI.h" />
+    <ClInclude Include="Source\Render\Visuals\MenuBackground.h" />
+    <ClInclude Include="Source\Scenes\BossScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\SceneManager.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\VictoryScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\TrainingScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\MainMenuScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\GameOverScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services\AudioManager.h">
+      <Filter>Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scenes\IntroScene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_impl_dx11.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_impl_win32.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Game.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\StepTimer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipeline\Renderer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipeline\UIRenderer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\pch.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DeviceResources.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gameplay\CollisionSystem.h" />
+    <ClInclude Include="Source\Common\Transform.h" />
+    <ClInclude Include="Source\UI\DebugUI.h" />
+    <ClInclude Include="Source\Gameplay\Player.h" />
+    <ClInclude Include="Source\Gameplay\Weapon\PlayerWeapon.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponModel.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gameplay\Boss.h" />
+    <ClInclude Include="ThirdParty\FastNoiseLite.h" />
+    <ClInclude Include="Source\Render\Visuals\Grid.h" />
+    <ClInclude Include="Source\Gameplay\Dummy.h" />
+    <ClInclude Include="Source\Services\BeatTracker.h" />
+    <ClInclude Include="Source\Common\StateMachine.h" />
+    <ClInclude Include="Source\Common\Easing.h" />
+    <ClInclude Include="Source\Gameplay\Bullet.h" />
+    <ClInclude Include="Source\Gameplay\BulletPool.h" />
+    <ClInclude Include="Source\Render\Visuals\ParticleSystem.h" />
+    <ClInclude Include="Source\Render\Visuals\BulletRenderer.h" />
+    <ClInclude Include="Source\Render\Visuals\Skybox.h" />
+    <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
+    <ClInclude Include="Source\Render\Visuals\Billboard.h" />
+    <ClInclude Include="Source\Gameplay\BossAttackManager.h" />
+    <ClInclude Include="Source\Render\Visuals\ArenaFloor.h" />
+    <ClInclude Include="Source\Common\Spring.h" />
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponMotion.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gameplay\Weapon\Weapon.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponRifle.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Services\SceneContext.h" />
+    <ClInclude Include="Source\Render\Assets\ShaderCache.h" />
+    <ClInclude Include="Source\Render\Assets\MeshCache.h" />
+    <ClInclude Include="Source\Render\Pipeline\RenderUtil.h" />
+    <ClInclude Include="Source\Render\Visuals\Tracers.h" />
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponShot.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Render\Pipeline\RenderCommand.h" />
+    <ClInclude Include="Source\Render\Pipeline\RenderCommandQueue.h" />
+    <ClInclude Include="Source\Gameplay\ICombatTarget.h" />
+    <ClInclude Include="Source\Render\Assets\AssimpModelImporter.h" />
+    <ClInclude Include="Source\Render\Skinning\SkinnedVertex.h" />
+    <ClInclude Include="Source\Render\Skinning\SkinnedModelData.h" />
+    <ClInclude Include="Source\Render\Skinning\SkinnedModelImporter.h" />
+    <ClInclude Include="Source\Render\Skinning\SkinnedModel.h" />
+    <ClInclude Include="Source\Render\Skinning\SkinnedRenderer.h" />
+    <ClInclude Include="Source\Render\Skinning\Skeleton.h" />
+    <ClInclude Include="Source\Render\Skinning\AnimationPlayer.h" />
+    <ClInclude Include="Source\Render\Assets\ImportedModel.h" />
+    <ClInclude Include="Source\Render\Assets\ImportedModelCache.h" />
+    <ClInclude Include="Source\Render\Assets\LayoutLoader.h" />
+    <ClInclude Include="Source\Gameplay\CombatSystem.h" />
+    <ClInclude Include="Source\Gameplay\EventBus.h" />
+    <ClInclude Include="Source\Gameplay\EventTypes.h" />
+    <ClInclude Include="Source\Render\Pipeline\SceneRenderer.h" />
+    <ClInclude Include="Source\Render\Pipeline\FinalCompositePass.h" />
+    <ClInclude Include="Source\Common\typedef.h" />
+    <ClInclude Include="Source\Common\camera.h" />
+    <ClInclude Include="Source\Gameplay\PlayerCamera.h" />
+    <ClInclude Include="Source\Render\Lighting\IndirectLight.h" />
+    <ClInclude Include="Source\Render\Assets\PrimitiveMesh.h" />
+    <ClInclude Include="Source\Render\Assets\PBRMaterialLoader.h" />
+    <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Services\InputManager.cpp" />
+    <ClCompile Include="Source\UI\GameUI.cpp" />
+    <ClCompile Include="Source\Render\Visuals\MenuBackground.cpp" />
+    <ClCompile Include="Source\Scenes\BossScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\SceneManager.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\VictoryScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\TrainingScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\MainMenuScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\GameOverScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Services\AudioManager.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scenes\IntroScene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_impl_win32.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Game.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Pipeline\Renderer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Pipeline\UIRenderer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\pch.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DeviceResources.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gameplay\CollisionSystem.cpp" />
+    <ClCompile Include="Core\Main.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UI\DebugUI.cpp" />
+    <ClCompile Include="Source\Gameplay\Player.cpp" />
+    <ClCompile Include="Source\Gameplay\Weapon\PlayerWeapon.cpp">
+      <Filter>Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gameplay\Weapon\WeaponModel.cpp">
+      <Filter>Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gameplay\Boss.cpp" />
+    <ClCompile Include="Source\Render\Visuals\Grid.cpp" />
+    <ClCompile Include="Source\Gameplay\Dummy.cpp" />
+    <ClCompile Include="Source\Services\BeatTracker.cpp" />
+    <ClCompile Include="Source\Gameplay\Bullet.cpp" />
+    <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
+    <ClCompile Include="Source\Render\Visuals\ParticleSystem.cpp" />
+    <ClCompile Include="Source\Render\Visuals\BulletRenderer.cpp" />
+    <ClCompile Include="Source\Render\Visuals\Skybox.cpp" />
+    <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
+    <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
+    <ClCompile Include="Source\Gameplay\BossAttackManager.cpp" />
+    <ClCompile Include="Source\Render\Visuals\ArenaFloor.cpp" />
+    <ClCompile Include="Source\Gameplay\Weapon\WeaponMotion.cpp">
+      <Filter>Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gameplay\Weapon\Weapon.cpp">
+      <Filter>Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Gameplay\Weapon\WeaponRifle.cpp">
+      <Filter>Weapon</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Render\Assets\ShaderCache.cpp" />
+    <ClCompile Include="Source\Render\Assets\MeshCache.cpp" />
+    <ClCompile Include="Source\Render\Pipeline\RenderUtil.cpp" />
+    <ClCompile Include="Source\Render\Visuals\Tracers.cpp" />
+    <ClCompile Include="Source\Render\Pipeline\RenderCommandQueue.cpp" />
+    <ClCompile Include="Source\Render\Assets\AssimpModelImporter.cpp" />
+    <ClCompile Include="Source\Render\Skinning\SkinnedModelImporter.cpp" />
+    <ClCompile Include="Source\Render\Skinning\SkinnedModel.cpp" />
+    <ClCompile Include="Source\Render\Skinning\SkinnedRenderer.cpp" />
+    <ClCompile Include="Source\Render\Skinning\Skeleton.cpp" />
+    <ClCompile Include="Source\Render\Skinning\AnimationPlayer.cpp" />
+    <ClCompile Include="Source\Render\Assets\ImportedModel.cpp" />
+    <ClCompile Include="Source\Render\Assets\ImportedModelCache.cpp" />
+    <ClCompile Include="Source\Render\Assets\LayoutLoader.cpp" />
+    <ClCompile Include="Source\Gameplay\CombatSystem.cpp" />
+    <ClCompile Include="Source\Gameplay\EventBus.cpp" />
+    <ClCompile Include="Source\Render\Pipeline\SceneRenderer.cpp" />
+    <ClCompile Include="Source\Render\Pipeline\FinalCompositePass.cpp" />
+    <ClCompile Include="Source\Common\camera.cpp" />
+    <ClCompile Include="Source\Gameplay\PlayerCamera.cpp" />
+    <ClCompile Include="Source\Render\Lighting\IndirectLight.cpp" />
+    <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
+    <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="settings.manifest">
+      <Filter>Assets</Filter>
+    </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\PS_ImportedModel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_ImportedModel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Beam.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Beam.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Tracer.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Tracer.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_ColorMask.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Fractal.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_PristineGrid.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_PristineGrid.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_MenuBackground.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Warping.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Wave.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Bolt.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_BeamBolt.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Orb.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Orb.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Particle.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PS_Particle.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_Skybox.hlsl" />
+    <FxCompile Include="Shaders\PS_Skybox.hlsl" />
+    <FxCompile Include="Shaders\VS_FullscreenTriangle.hlsl" />
+    <FxCompile Include="Shaders\PS_BloomPrefilter.hlsl" />
+    <FxCompile Include="Shaders\PS_BloomDownsample.hlsl" />
+    <FxCompile Include="Shaders\PS_BloomUpsample.hlsl" />
+    <FxCompile Include="Shaders\PS_BloomComposite.hlsl" />
+    <FxCompile Include="Shaders\VS_Billboard.hlsl" />
+    <FxCompile Include="Shaders\PS_Billboard.hlsl" />
+    <FxCompile Include="Shaders\VS_WaveWorld.hlsl" />
+    <FxCompile Include="Shaders\PS_WaveWorld.hlsl" />
+    <FxCompile Include="Shaders\VS_SkinnedMenu.hlsl" />
+    <FxCompile Include="Shaders\PS_SkinnedMenu.hlsl" />
+    <FxCompile Include="Shaders\PS_FinalComposite.hlsl" />
+    <FxCompile Include="Shaders\CS_IrradianceConvolution.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Common.hlsli" />
+    <None Include="Shaders\Sampling.hlsli" />
+    <None Include="Shaders\Camera.hlsli" />
+    <None Include="Shaders\BRDF.hlsli" />
+    <None Include="Shaders\Includes\IBLCommon.hlsli" />
+    <None Include="Shaders\Includes\Lighting.hlsli" />
+  </ItemGroup>
+</Project>

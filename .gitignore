@@ -1,0 +1,24 @@
+# Old git history
+/.git-archive-old/
+
+# Visual Studio build output & cache
+/x64/
+/Photonics/
+/.vs/
+Photonics.vcxproj.user
+
+# Third-party libraries
+/ImGui/
+/DirectXTK/
+/ThirdParty/
+
+# Media assets
+/Assets/
+
+# Personal learning notes
+/Docs/
+
+# App packaging
+/resource.rc
+/settings.manifest
+/triangle.ico
