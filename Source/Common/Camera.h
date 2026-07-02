@@ -106,7 +106,7 @@ protected:
 	float m_roll { 0.0f };                     //!< ロール角 (度)
 
 	// レンズパラメータ
-	float m_fovy       { DirectX::XMConvertToRadians(45.0f) };    //!< 画角        (radian)
+	float m_fovy       { DirectX::XMConvertToRadians(45.0f) };    //!< 画角 (radian)
 	float m_aspectRatio{ 16.0f / 9.0f };                          //!< アスペクト比
 	float m_nearZ      { 0.1f };                                  //!< ニアクリップ距離
 	float m_farZ       { 1000.0f };                               //!< ファークリップ距離

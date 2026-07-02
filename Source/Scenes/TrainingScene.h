@@ -22,6 +22,8 @@
 #include <memory>
 #include <vector>
 
+#include "Render/Visuals/WaveSurface.h"
+
 class PlayerCamera;
 
 class TrainingScene : public Scene
@@ -83,4 +85,6 @@ private:
     void renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderViewmodel(const Matrix& view, const Vector3& camPos);
     void renderUI(const Matrix& view, const Matrix& proj);
+
+    std::unique_ptr<WaveSurface> m_waveSurface;
 };

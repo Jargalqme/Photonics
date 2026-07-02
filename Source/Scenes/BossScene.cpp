@@ -123,7 +123,7 @@ void BossScene::initialize(SceneContext& context)
     {
         m_pbrSmokeModel = m_context->importedModels
             ? m_context->importedModels->getWithAmbientCGMaterial(
-                "Assets/Weapons/Rifle/rifle.glb",
+                "Assets/Weapons/Rifle/pistol.glb",
                 GetAssetPath(L"Textures/PBR/Stone"))
             : nullptr;
         if (!m_pbrSmokeModel)
@@ -395,7 +395,6 @@ void BossScene::render()
 
 void BossScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
-    // ArenaFloor は将来用に保持（現状未使用）
     m_skybox->render();
     m_arenaFloor->render(view, proj);
     m_grid->render(view, proj);

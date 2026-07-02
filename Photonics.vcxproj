@@ -219,14 +219,9 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Source\Render\Assets\PBRMaterialLoader.h" />
     <ClInclude Include="Source\Render\Assets\PrimitiveMesh.h" />
     <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedVertex.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModelData.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModelImporter.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModel.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedRenderer.h" />
-    <ClInclude Include="Source\Render\Skinning\Skeleton.h" />
-    <ClInclude Include="Source\Render\Skinning\AnimationPlayer.h" />
     <ClInclude Include="Source\Render\Pipeline\SceneRenderer.h" />
+    <ClInclude Include="Source\Render\Visuals\WaveSim.h" />
+    <ClInclude Include="Source\Render\Visuals\WaveSurface.h" />
     <ClInclude Include="Source\Services\AudioManager.h" />
     <ClInclude Include="Source\Render\Visuals\Billboard.h" />
     <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
@@ -324,12 +319,8 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClCompile Include="Source\Render\Lighting\IndirectLight.cpp" />
     <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
     <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedModelImporter.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedModel.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedRenderer.cpp" />
-    <ClCompile Include="Source\Render\Skinning\Skeleton.cpp" />
-    <ClCompile Include="Source\Render\Skinning\AnimationPlayer.cpp" />
     <ClCompile Include="Source\Render\Pipeline\SceneRenderer.cpp" />
+    <ClCompile Include="Source\Render\Visuals\WaveSurface.cpp" />
     <ClCompile Include="Source\Services\AudioManager.cpp" />
     <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
@@ -407,27 +398,16 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
     </FxCompile>
+    <FxCompile Include="Shaders\PS_WaveSurface.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
     <FxCompile Include="Shaders\VS_ImportedModel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
-    <FxCompile Include="Shaders\VS_SkinnedMenu.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
-    <FxCompile Include="Shaders\PS_SkinnedMenu.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
@@ -702,6 +682,11 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Shaders\VS_WaveSurface.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Shaders\VS_WaveWorld.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

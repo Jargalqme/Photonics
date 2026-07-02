@@ -145,13 +145,6 @@
     <ClInclude Include="Source\Render\Pipeline\RenderCommandQueue.h" />
     <ClInclude Include="Source\Gameplay\ICombatTarget.h" />
     <ClInclude Include="Source\Render\Assets\AssimpModelImporter.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedVertex.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModelData.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModelImporter.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedModel.h" />
-    <ClInclude Include="Source\Render\Skinning\SkinnedRenderer.h" />
-    <ClInclude Include="Source\Render\Skinning\Skeleton.h" />
-    <ClInclude Include="Source\Render\Skinning\AnimationPlayer.h" />
     <ClInclude Include="Source\Render\Assets\ImportedModel.h" />
     <ClInclude Include="Source\Render\Assets\ImportedModelCache.h" />
     <ClInclude Include="Source\Render\Assets\LayoutLoader.h" />
@@ -167,6 +160,8 @@
     <ClInclude Include="Source\Render\Assets\PrimitiveMesh.h" />
     <ClInclude Include="Source\Render\Assets\PBRMaterialLoader.h" />
     <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
+    <ClInclude Include="Source\Render\Visuals\WaveSim.h" />
+    <ClInclude Include="Source\Render\Visuals\WaveSurface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Services\InputManager.cpp" />
@@ -272,11 +267,6 @@
     <ClCompile Include="Source\Render\Visuals\Tracers.cpp" />
     <ClCompile Include="Source\Render\Pipeline\RenderCommandQueue.cpp" />
     <ClCompile Include="Source\Render\Assets\AssimpModelImporter.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedModelImporter.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedModel.cpp" />
-    <ClCompile Include="Source\Render\Skinning\SkinnedRenderer.cpp" />
-    <ClCompile Include="Source\Render\Skinning\Skeleton.cpp" />
-    <ClCompile Include="Source\Render\Skinning\AnimationPlayer.cpp" />
     <ClCompile Include="Source\Render\Assets\ImportedModel.cpp" />
     <ClCompile Include="Source\Render\Assets\ImportedModelCache.cpp" />
     <ClCompile Include="Source\Render\Assets\LayoutLoader.cpp" />
@@ -289,6 +279,7 @@
     <ClCompile Include="Source\Render\Lighting\IndirectLight.cpp" />
     <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
     <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
+    <ClCompile Include="Source\Render\Visuals\WaveSurface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -367,10 +358,10 @@
     <FxCompile Include="Shaders\PS_Billboard.hlsl" />
     <FxCompile Include="Shaders\VS_WaveWorld.hlsl" />
     <FxCompile Include="Shaders\PS_WaveWorld.hlsl" />
-    <FxCompile Include="Shaders\VS_SkinnedMenu.hlsl" />
-    <FxCompile Include="Shaders\PS_SkinnedMenu.hlsl" />
     <FxCompile Include="Shaders\PS_FinalComposite.hlsl" />
     <FxCompile Include="Shaders\CS_IrradianceConvolution.hlsl" />
+    <FxCompile Include="Shaders\PS_WaveSurface.hlsl" />
+    <FxCompile Include="Shaders\VS_WaveSurface.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />

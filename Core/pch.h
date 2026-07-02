@@ -48,6 +48,8 @@
 #include "CommonStates.h"
 #include "SimpleMath.h"
 #include "PostProcess.h"
+#include "Keyboard.h"
+#include "Mouse.h"
 
 #include <algorithm>
 #include <cmath>

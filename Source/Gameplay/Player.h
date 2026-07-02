@@ -65,6 +65,7 @@ private:
     static constexpr float MOVE_THRESHOLD      = 0.001f;
     static constexpr float ARENA_HALF_SIZE     = 500.0f;
     static constexpr float LOOK_PITCH_CLAMP    = 89.0f;
+    // TODO: dead constant need to wire it cleanly.
     static constexpr float PLAYER_HIT_RADIUS   = 0.8f;
 
     void setAiming(bool aiming) noexcept { m_isAiming = aiming; }

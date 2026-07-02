@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "UI/DebugUI.h"
 #include "Gameplay/PlayerCamera.h"
 #include "Gameplay/Player.h"
@@ -16,6 +16,8 @@
 
 #include <cstdarg>
 #include <cstdio>
+
+#include "Render/Visuals/WaveSurface.h"
 
 namespace
 {
@@ -452,6 +454,22 @@ void DebugUI::drawRenderingPanel()
         else
         {
             DrawUnavailableRow("Grid");
+        }
+        ImGui::EndTable();
+    }
+
+    DrawSubheading("Wave");
+    if (BeginPropertyGrid("##render_wave"))
+    {
+        if (m_waveSurface)
+        {
+            DrawSliderFloatRow("Height", m_waveSurface->getHeightPtr(), 0.0f, 1.0f, "%.3f");
+            DrawSliderFloatRow("Sim Speed", m_waveSurface->getSimSpeedPtr(), 0.05f, 2.0f, "%.2f");
+            DrawSliderFloatRow("Speed (C)", m_waveSurface->getcConstPtr(), 0.0f, 0.49f, "%.3f");
+        }
+        else
+        {
+            DrawUnavailableRow("Wave");
         }
         ImGui::EndTable();
     }

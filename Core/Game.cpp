@@ -1,6 +1,18 @@
 ﻿#include "pch.h"
 #include "Game.h"
-#include "Render/Assets/AssimpModelImporter.h"
+
+#include "Render/Pipeline/Renderer.h"
+#include "Render/Assets/ShaderCache.h"
+#include "Render/Assets/MeshCache.h"
+#include "Render/Assets/ImportedModelCache.h"
+#include "Source/Services/InputManager.h"
+#include "Scenes/SceneManager.h"
+#include "Scenes/IntroScene.h"
+#include "Scenes/MainMenuScene.h"
+#include "Scenes/BossScene.h"
+#include "Scenes/TrainingScene.h"
+#include "Scenes/VictoryScene.h"
+#include "Scenes/GameOverScene.h"
 
 #include <algorithm>
 #include <cwchar>
@@ -137,21 +149,14 @@ void Game::Initialize(HWND window, int width, int height)
     m_commonStates = std::make_unique<CommonStates>(m_deviceResources->GetD3DDevice());
 
     m_context.game = this;
-    m_context.device = m_deviceResources.get();
-    m_context.renderer = m_renderer.get();
-    m_context.input = m_input.get();
-    m_context.audio = nullptr;
-    m_context.shaders = m_shaders.get();
-    m_context.meshes = m_meshes.get();
+    m_context.device         = m_deviceResources.get();
+    m_context.renderer       = m_renderer.get();
+    m_context.input          = m_input.get();
+    m_context.audio          = nullptr;
+    m_context.shaders        = m_shaders.get();
+    m_context.meshes         = m_meshes.get();
     m_context.importedModels = m_importedModels.get();
-    m_context.commonStates = m_commonStates.get();
-
-#ifdef _DEBUG
-    const AssimpModelReport rifleReport =
-        AssimpModelImporter::Inspect("Assets/Weapons/Rifle/rifle.glb");
-    AssimpModelImporter::DumpReport(rifleReport);
-    AssimpModelImporter::WriteReportFile(rifleReport, "assimp_model_report.txt");
-#endif
+    m_context.commonStates   = m_commonStates.get();
 
     m_sceneManager->initialize(m_context);
 
@@ -242,14 +247,17 @@ void Game::Render()
 #pragma region Message Handlers
 void Game::OnActivated()
 {
+    // TODO: Re-acquire input / unpause when the window regains focus.
 }
 
 void Game::OnDeactivated()
 {
+    // TODO: Pause gameplay when the window loses focus.
 }
 
 void Game::OnSuspending()
 {
+    // TODO: Pause and release transient resources on minimize / suspend.
 }
 
 void Game::OnResuming()

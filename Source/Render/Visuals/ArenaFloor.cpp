@@ -21,10 +21,10 @@ void ArenaFloor::initialize()
     float z = 80.0f;
 
     Vertex vertices[4] = {
-        { XMFLOAT3(-halfWidth, bottomY, z)},
-        { XMFLOAT3(-halfWidth, topY, z)},
-        { XMFLOAT3(halfWidth, bottomY,z)},
-        { XMFLOAT3(halfWidth, topY, z)}
+        { XMFLOAT3(-halfWidth, bottomY, z) },
+        { XMFLOAT3(-halfWidth, topY, z) },
+        { XMFLOAT3(halfWidth, bottomY, z) },
+        { XMFLOAT3(halfWidth, topY, z) }
     };
 
     uint16_t indices[6] = { 0, 1, 2, 2, 1, 3 };
@@ -42,6 +42,7 @@ void ArenaFloor::initialize()
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
           D3D11_INPUT_PER_VERTEX_DATA, 0 }
     };
+
     DX::ThrowIfFailed(device->CreateInputLayout(
         layout, 1,
         vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(),
@@ -127,3 +128,6 @@ void ArenaFloor::render(const Matrix& view, const Matrix& projection)
     context->OMSetDepthStencilState(nullptr, 0);
     context->RSSetState(nullptr);
 }
+
+
+

@@ -133,6 +133,10 @@ void TrainingScene::initialize(SceneContext& context)
     // ワールド
     m_grid = std::make_unique<Grid>(*m_context);
     m_grid->initialize();
+
+    m_waveSurface = std::make_unique<WaveSurface>(*m_context);
+    m_waveSurface->initialize();
+
     LayoutLoader::loadLayout(
         *m_context,
         getAssetPathString(ENVIRONMENT_LAYOUT_PATH),
@@ -158,6 +162,8 @@ void TrainingScene::initialize(SceneContext& context)
     m_debugUI->setExposurePtr(m_camera->exposurePtr());
     m_debugUI->setAudioManager(m_audioManager.get());
     m_debugUI->setSceneLighting(&m_lighting);
+
+    m_debugUI->setWaveSurface(m_waveSurface.get());
 }
 
 // === シーン遷移 ===
@@ -237,6 +243,9 @@ void TrainingScene::exit()
 void TrainingScene::finalize()
 {
     if (m_grid) { m_grid->finalize(); }
+
+    if (m_waveSurface) { m_waveSurface->finalize(); }
+
     if (m_player) { m_player->finalize(); }
     if (m_particleSystem) { m_particleSystem->finalize(); }
     if (m_bulletRenderer) { m_bulletRenderer->finalize(); }
@@ -251,6 +260,7 @@ void TrainingScene::finalize()
     m_camera.reset();
     m_player.reset();
     m_grid.reset();
+    m_waveSurface.reset();
     m_audioManager.reset();
     m_debugUI.reset();
 }
@@ -307,6 +317,8 @@ void TrainingScene::update(float deltaTime, InputManager* input)
     m_bulletRenderer->update(deltaTime);
     m_tracers->update(deltaTime);
     m_grid->update();
+
+    m_waveSurface->update(deltaTime);
 }
 
 // === 描画 ===
@@ -329,8 +341,10 @@ void TrainingScene::renderWorld(const Matrix& view, const Matrix& proj, const Ve
 {
     m_grid->render(view, proj);
 
+    m_waveSurface->render(view, proj);
+
     m_renderQueue.clear();
-    m_dummy->submitRender(m_renderQueue);
+    //m_dummy->submitRender(m_renderQueue);
 
     for (const PrimitiveLayoutPart& part : m_environmentLayout.parts)
     {
@@ -384,13 +398,13 @@ void TrainingScene::renderViewmodel(const Matrix& view, const Vector3& camPos)
     m_renderer->BeginViewmodelPass();   // 深度クリアして常に最前面に描画
 
     m_renderQueue.clear();
-    m_player->weapon().render(m_renderQueue, view);
+    //m_player->weapon().render(m_renderQueue, view);
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, m_camera->matViewmodelProj(), camPos, m_lighting);
 }
 
 void TrainingScene::renderUI(const Matrix& view, const Matrix& proj)
 {
-    m_gameUI->render(view, proj);
+    //m_gameUI->render(view, proj);
     if (m_debugMode && m_debugUI)
     {
         m_debugUI->render();

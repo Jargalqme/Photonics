@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Render/Pipeline/UIRenderer.h"
 
 using namespace DirectX;
@@ -13,8 +13,8 @@ void UIRenderer::createDeviceDependentResources(ID3D11Device* device,
 	{
 		m_fontTitle = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/Michroma_64_Regular.spritefont").c_str());
 		m_fontQuote = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/RobotoCondensed_42_Regular.spritefont").c_str());
-		m_fontMenu = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/RobotoCondensed_32_Regular.spritefont").c_str());
-		m_fontHud = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/RobotoCondensed_24_Regular.spritefont").c_str());
+		m_fontMenu  = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/RobotoCondensed_32_Regular.spritefont").c_str());
+		m_fontHud   = std::make_unique<SpriteFont>(device, GetAssetPath(L"Fonts/RobotoCondensed_24_Regular.spritefont").c_str());
 	}
 	catch (const std::exception& e)
 	{

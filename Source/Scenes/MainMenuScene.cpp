@@ -9,11 +9,6 @@
 #include "Render/Pipeline/UIRenderer.h"
 #include "Render/Visuals/Grid.h"
 #include "Render/Pipeline/SceneRenderer.h"
-#include "Render/Skinning/AnimationPlayer.h"
-#include "Render/Skinning/SkinnedModel.h"
-#include "Render/Skinning/SkinnedModelImporter.h"
-#include "Render/Skinning/SkinnedRenderer.h"
-#include "Render/Skinning/Skeleton.h"
 
 #include <cmath>
 #include <iterator>
@@ -35,11 +30,6 @@ namespace
 
     constexpr int RESOLUTION_COUNT = static_cast<int>(std::size(RESOLUTIONS));
 
-    const char* BoolText(bool value)
-    {
-        return value ? "yes" : "no";
-    }
-
     void TraceLine(const std::string& text)
     {
         OutputDebugStringA(text.c_str());
@@ -51,68 +41,6 @@ namespace
         return std::to_string(value.x) + ", "
             + std::to_string(value.y) + ", "
             + std::to_string(value.z);
-    }
-
-    void TraceSkinnedModelLoad(const SkinnedModelData& data, int32_t appendedClips)
-    {
-        TraceLine("[MainMenu] Skinned model loaded: " + data.sourcePath.generic_string());
-        TraceLine("[MainMenu]   vertices=" + std::to_string(data.vertices.size())
-            + " indices=" + std::to_string(data.indices.size())
-            + " submeshes=" + std::to_string(data.submeshes.size())
-            + " materials=" + std::to_string(data.materials.size())
-            + " textures=" + std::to_string(data.textures.size())
-            + " bones=" + std::to_string(data.bones.size())
-            + " clips=" + std::to_string(data.clips.size())
-            + " idleAppended=" + std::to_string(appendedClips));
-
-        for (size_t i = 0; i < data.textures.size(); ++i)
-        {
-            const SkinnedTextureData& tex = data.textures[i];
-            TraceLine("[MainMenu]   texture[" + std::to_string(i) + "] "
-                + tex.name
-                + " bytes=" + std::to_string(tex.bytes.size())
-                + " size=" + std::to_string(tex.width) + "x" + std::to_string(tex.height)
-                + " compressed=" + BoolText(tex.compressed)
-                + " srgb=" + BoolText(tex.srgb));
-        }
-
-        for (size_t i = 0; i < data.materials.size(); ++i)
-        {
-            const SkinnedMaterial& mat = data.materials[i];
-            std::string textureName = "none";
-            if (mat.baseColorTextureIndex >= 0 &&
-                static_cast<size_t>(mat.baseColorTextureIndex) < data.textures.size())
-            {
-                textureName = data.textures[mat.baseColorTextureIndex].name;
-            }
-
-            TraceLine("[MainMenu]   material[" + std::to_string(i) + "]"
-                + " baseColor=("
-                + std::to_string(mat.baseColor.x) + ", "
-                + std::to_string(mat.baseColor.y) + ", "
-                + std::to_string(mat.baseColor.z) + ", "
-                + std::to_string(mat.baseColor.w) + ")"
-                + " baseColorTextureIndex=" + std::to_string(mat.baseColorTextureIndex)
-                + " texture=" + textureName);
-        }
-    }
-
-    Matrix MakeRotationDegrees(const Vector3& rotationDegrees)
-    {
-        return Matrix::CreateFromYawPitchRoll(
-            XMConvertToRadians(rotationDegrees.y),
-            XMConvertToRadians(rotationDegrees.x),
-            XMConvertToRadians(rotationDegrees.z));
-    }
-
-    Matrix MakeTransformMatrix(
-        const Vector3& position,
-        const Vector3& rotationDegrees,
-        const Vector3& scale)
-    {
-        return Matrix::CreateScale(scale) *
-            MakeRotationDegrees(rotationDegrees) *
-            Matrix::CreateTranslation(position);
     }
 
     void BuildCameraBasis(
@@ -245,48 +173,6 @@ void MainMenuScene::initialize(SceneContext& context)
     m_grid->setLineColor(Color(2.0f, 0.4f, 2.7f, 1.0f));
     m_grid->setBaseColor(Color(0.0f, 0.0f, 0.0f, 1.0f));
 
-    SkinnedModelData data;
-    const auto modelPath = GetAssetPath(L"Characters/MenuGuy/model3.fbx");
-    if (SkinnedModelImporter::LoadSkinnedModelData(modelPath, data))
-    {
-        size_t selectedClipIndex = data.clips.empty() ? 0 : data.clips.size() - 1;
-        bool hasSelectedClip = !data.clips.empty();
-
-        const int32_t appended = 0;
-        TraceSkinnedModelLoad(data, appended);
-
-        m_menuCharacter = std::make_unique<SkinnedModel>();
-        if (!m_menuCharacter->initialize(m_deviceResources->GetD3DDevice(), std::move(data)))
-        {
-            m_menuCharacter.reset();
-        }
-
-        if (m_menuCharacter)
-        {
-            m_skinnedRenderer = std::make_unique<SkinnedRenderer>();
-            if (!m_skinnedRenderer->initialize(m_deviceResources->GetD3DDevice()))
-            {
-                m_skinnedRenderer.reset();
-            }
-
-            m_skeleton = std::make_unique<Skeleton>();
-            m_skeleton->build(m_menuCharacter->data());
-
-            m_animationPlayer = std::make_unique<AnimationPlayer>();
-            const auto& clips = m_menuCharacter->clips();
-            if (hasSelectedClip && selectedClipIndex < clips.size())
-            {
-                m_animationPlayer->setClip(&clips[selectedClipIndex]);
-                m_animationPlayer->setLoop(true);
-            }
-            else if (!clips.empty())
-            {
-                m_animationPlayer->setClip(&clips.back());
-                m_animationPlayer->setLoop(true);
-            }
-        }
-    }
-
     m_audioManager = std::make_unique<AudioManager>();
     m_audioManager->initialize();
     m_audioManager->loadMusic("menu", GetAssetPath(L"Audio/menu_music.wav").c_str());
@@ -332,26 +218,6 @@ void MainMenuScene::exit()
 
 void MainMenuScene::finalize()
 {
-    if (m_skinnedRenderer)
-    {
-        m_skinnedRenderer->finalize();
-        m_skinnedRenderer.reset();
-    }
-
-    if (m_menuCharacter)
-    {
-        m_menuCharacter->finalize();
-        m_menuCharacter.reset();
-    }
-
-    if (m_skeleton)
-    {
-        m_skeleton->finalize();
-        m_skeleton.reset();
-    }
-
-    m_animationPlayer.reset();
-
     if (m_grid)
     {
         m_grid->finalize();
@@ -362,6 +228,8 @@ void MainMenuScene::finalize()
 
 void MainMenuScene::update(float deltaTime, InputManager* input)
 {
+    (void)deltaTime;
+
     if (m_audioManager)
     {
         m_audioManager->update();
@@ -370,11 +238,6 @@ void MainMenuScene::update(float deltaTime, InputManager* input)
     if (m_grid)
     {
         m_grid->update();
-    }
-
-    if (m_animationPlayer)
-    {
-        m_animationPlayer->update(deltaTime);
     }
 
     if (m_state == State::Root)
@@ -568,7 +431,6 @@ void MainMenuScene::render()
         XMConvertToRadians(m_menuCameraFovDegrees), aspect, 1.0f, 1000.0f);
 
     renderMenuWorld(view, proj);
-    renderMenuCharacter(view, proj);
 
     if (m_state == State::Root)
     {
@@ -591,41 +453,6 @@ void MainMenuScene::renderMenuWorld(
     {
         m_grid->render(view, proj);
     }
-}
-
-void MainMenuScene::renderMenuCharacter(
-    const Matrix& view,
-    const Matrix& proj)
-{
-    if (!m_menuCharacter || !m_skinnedRenderer)
-    {
-        return;
-    }
-
-    const Matrix world = MakeTransformMatrix(
-        m_menuCharacterPosition,
-        m_menuCharacterRotationDegrees,
-        m_menuCharacterScale);
-
-    const Matrix* palette = nullptr;
-    uint32_t paletteCount = 0;
-    if (m_skeleton && m_animationPlayer)
-    {
-        m_animationPlayer->apply(*m_skeleton);
-        palette = m_skeleton->palette();
-        paletteCount = m_skeleton->boneCount();
-    }
-
-    m_skinnedRenderer->draw(
-        m_deviceResources->GetD3DDeviceContext(),
-        *m_menuCharacter,
-        palette,
-        paletteCount,
-        world,
-        view,
-        proj,
-        Vector4(1.0f, 1.0f, 1.0f, 1.0f),
-        Vector4(0.0f, -1.0f, 0.0f, 1.0f));
 }
 
 void MainMenuScene::renderTuningPanel()
@@ -651,10 +478,6 @@ void MainMenuScene::renderTuningPanel()
         m_menuCameraRotationDegrees = Vector3(-3.0f, 0.0f, 0.0f);
         m_menuCameraFovDegrees = 45.0f;
 
-        m_menuCharacterPosition = Vector3(55.0f, -60.0f, 280.0f);
-        m_menuCharacterRotationDegrees = Vector3::Zero;
-        m_menuCharacterScale = Vector3(2.0f, 2.0f, 2.0f);
-
         if (bloom)
         {
             bloom->setEnabled(true);
@@ -671,9 +494,6 @@ void MainMenuScene::renderTuningPanel()
         TraceLine("[MainMenu] Tuning camera position=(" + FormatVector3(m_menuCameraPosition)
             + ") rotationDegrees=(" + FormatVector3(m_menuCameraRotationDegrees)
             + ") fov=" + std::to_string(m_menuCameraFovDegrees));
-        TraceLine("[MainMenu] Tuning character position=(" + FormatVector3(m_menuCharacterPosition)
-            + ") rotationDegrees=(" + FormatVector3(m_menuCharacterRotationDegrees)
-            + ") scale=(" + FormatVector3(m_menuCharacterScale) + ")");
         if (bloom)
         {
             TraceLine("[MainMenu] Tuning bloom enabled=" + std::to_string(bloom->isEnabled() ? 1 : 0)
@@ -689,13 +509,6 @@ void MainMenuScene::renderTuningPanel()
         ImGui::DragFloat3("Position##Camera", &m_menuCameraPosition.x, 0.25f, -500.0f, 500.0f, "%.2f");
         ImGui::DragFloat3("Rotation##Camera", &m_menuCameraRotationDegrees.x, 0.1f, -180.0f, 180.0f, "%.2f deg");
         ImGui::SliderFloat("FOV##Camera", &m_menuCameraFovDegrees, 20.0f, 100.0f, "%.1f deg");
-    }
-
-    if (ImGui::CollapsingHeader("Character", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::DragFloat3("Position##Character", &m_menuCharacterPosition.x, 0.25f, -300.0f, 300.0f, "%.2f");
-        ImGui::DragFloat3("Rotation##Character", &m_menuCharacterRotationDegrees.x, 0.1f, -180.0f, 180.0f, "%.2f deg");
-        ImGui::DragFloat3("Scale##Character", &m_menuCharacterScale.x, 0.01f, 0.01f, 5.0f, "%.2f");
     }
 
     if (ImGui::CollapsingHeader("Bloom", ImGuiTreeNodeFlags_DefaultOpen))
