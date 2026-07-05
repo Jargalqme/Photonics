@@ -4,11 +4,9 @@
 
 #include "Gameplay/Player.h"
 #include "Gameplay/Dummy.h"
-#include "Gameplay/BulletPool.h"
 #include "Gameplay/ICombatTarget.h"
 #include "Gameplay/CombatSystem.h"
 #include "Render/Visuals/Grid.h"
-#include "Render/Visuals/BulletRenderer.h"
 #include "Render/Assets/LayoutLoader.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
@@ -21,8 +19,6 @@
 
 #include <memory>
 #include <vector>
-
-#include "Render/Visuals/WaveSurface.h"
 
 class PlayerCamera;
 
@@ -63,12 +59,9 @@ private:
 
     std::unique_ptr<Dummy> m_dummy;
     std::vector<ICombatTarget*> m_shotTargets;
-    std::vector<ICombatTarget*> m_bulletTargets;
-    BulletPool m_bulletPool;
     CombatSystem m_combatSystem;
 
     std::unique_ptr<ParticleSystem> m_particleSystem;
-    std::unique_ptr<BulletRenderer> m_bulletRenderer;
     std::unique_ptr<Tracers> m_tracers;
     RenderCommandQueue m_renderQueue;
     SceneLighting m_lighting;
@@ -85,6 +78,4 @@ private:
     void renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderViewmodel(const Matrix& view, const Vector3& camPos);
     void renderUI(const Matrix& view, const Matrix& proj);
-
-    std::unique_ptr<WaveSurface> m_waveSurface;
 };

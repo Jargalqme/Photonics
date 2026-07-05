@@ -35,7 +35,8 @@ void SceneRenderer::onDeviceLost()
 
 void SceneRenderer::renderPostProcess(
     ID3D11ShaderResourceView* sceneSRV,
-    ID3D11RenderTargetView* backbuffer)
+    ID3D11RenderTargetView* backbuffer,
+    const D3D11_VIEWPORT& outputViewport)
 {
     // Pull exposure from the active camera. Scenes are expected to have
     // called setActiveCamera() at enter(); fallback to 1.0 (identity) if
@@ -48,10 +49,10 @@ void SceneRenderer::renderPostProcess(
     if (m_bloom->isEnabled())
     {
         m_bloom->render(sceneSRV);
-        m_finalComposite->process(m_bloom->getOutputSRV(), backbuffer, exposure);
+        m_finalComposite->process(m_bloom->getOutputSRV(), backbuffer, outputViewport, exposure);
     }
     else
     {
-        m_finalComposite->process(sceneSRV, backbuffer, exposure);
+        m_finalComposite->process(sceneSRV, backbuffer, outputViewport, exposure);
     }
 }

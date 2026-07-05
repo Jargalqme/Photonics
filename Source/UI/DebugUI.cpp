@@ -17,8 +17,6 @@
 #include <cstdarg>
 #include <cstdio>
 
-#include "Render/Visuals/WaveSurface.h"
-
 namespace
 {
     constexpr int DEBUG_STYLE_VAR_COUNT = 7;
@@ -458,22 +456,6 @@ void DebugUI::drawRenderingPanel()
         ImGui::EndTable();
     }
 
-    DrawSubheading("Wave");
-    if (BeginPropertyGrid("##render_wave"))
-    {
-        if (m_waveSurface)
-        {
-            DrawSliderFloatRow("Height", m_waveSurface->getHeightPtr(), 0.0f, 1.0f, "%.3f");
-            DrawSliderFloatRow("Sim Speed", m_waveSurface->getSimSpeedPtr(), 0.05f, 2.0f, "%.2f");
-            DrawSliderFloatRow("Speed (C)", m_waveSurface->getcConstPtr(), 0.0f, 0.49f, "%.3f");
-        }
-        else
-        {
-            DrawUnavailableRow("Wave");
-        }
-        ImGui::EndTable();
-    }
-
     DrawSubheading("Bloom");
     if (BeginPropertyGrid("##render_bloom"))
     {
@@ -505,17 +487,8 @@ void DebugUI::drawCombatPanel()
     {
         if (m_bulletPool)
         {
-            Bullet* bullets = m_bulletPool->getBullets();
             const int max = m_bulletPool->getMaxBullets();
-            int activeCount = 0;
-
-            for (int i = 0; i < max; i++)
-            {
-                if (bullets[i].isActive())
-                {
-                    activeCount++;
-                }
-            }
+            const int activeCount = m_bulletPool->countActive();
 
             DrawFormattedTextRow("Active", "%d / %d", activeCount, max);
             DrawProgressRow("Usage", max > 0 ? static_cast<float>(activeCount) / static_cast<float>(max) : 0.0f);

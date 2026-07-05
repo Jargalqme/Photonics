@@ -3,7 +3,6 @@
 #include "Scenes/SceneManager.h"
 #include "Services/InputManager.h"
 #include "Render/Pipeline/Renderer.h"
-#include "Game.h"
 
 #include "Render/Pipeline/Bloom.h"
 #include "Render/Pipeline/UIRenderer.h"
@@ -11,25 +10,10 @@
 #include "Render/Pipeline/SceneRenderer.h"
 
 #include <cmath>
-#include <iterator>
 #include <string>
 
 namespace
 {
-    struct ResolutionOption
-    {
-        int width;
-        int height;
-        const wchar_t* label;
-    };
-
-    constexpr ResolutionOption RESOLUTIONS[] = {
-        { 1920, 1080, L"1920 x 1080" },
-        { 1920, 1200, L"1920 x 1200" },
-    };
-
-    constexpr int RESOLUTION_COUNT = static_cast<int>(std::size(RESOLUTIONS));
-
     void TraceLine(const std::string& text)
     {
         OutputDebugStringA(text.c_str());
@@ -84,12 +68,9 @@ namespace
     constexpr float MENU_CENTER_X = 480.0f;
     constexpr float ROOT_TITLE_CENTER_Y = 400.0f;
     constexpr float ROOT_BUTTONS_TOP_Y = 490.0f;
-    constexpr float SETTINGS_TITLE_CENTER_Y = 410.0f;
-    constexpr float SETTINGS_ROWS_TOP_Y = 500.0f;
     constexpr float BUTTON_WIDTH = 280.0f;
     constexpr float BUTTON_HEIGHT = 44.0f;
     constexpr float BUTTON_SPACING = 12.0f;
-    constexpr float RESOLUTION_ROW_WIDTH = 560.0f;
 
     const DirectX::XMVECTORF32 MENU_TEXT_ACTIVE   = { { { 0.000f, 1.000f, 1.000f, 1.0f } } };
     const DirectX::XMVECTORF32 MENU_TEXT_INACTIVE = { { { 0.588f, 0.784f, 0.784f, 1.0f } } };
@@ -108,15 +89,6 @@ namespace
     {
         const float y = ROOT_BUTTONS_TOP_Y + index * (BUTTON_HEIGHT + BUTTON_SPACING);
         return MakeRefRect(MENU_CENTER_X - BUTTON_WIDTH * 0.5f, y, BUTTON_WIDTH, BUTTON_HEIGHT);
-    }
-
-    RECT SettingsButtonRect(int index)
-    {
-        // 行 0 は解像度行（幅広）、APPLY の前に余白を 1 つ挟む
-        const float width = (index == 0) ? RESOLUTION_ROW_WIDTH : BUTTON_WIDTH;
-        const float extraGap = (index > 0) ? 8.0f : 0.0f;
-        const float y = SETTINGS_ROWS_TOP_Y + index * (BUTTON_HEIGHT + BUTTON_SPACING) + extraGap;
-        return MakeRefRect(MENU_CENTER_X - width * 0.5f, y, width, BUTTON_HEIGHT);
     }
 
     bool ContainsPoint(const RECT& rect, const Vector2& point)
@@ -300,10 +272,8 @@ void MainMenuScene::activateRootItem(int index)
     case 1:
         m_sceneManager->transitionTo("Training");
         break;
+    // TODO(settings): 設定が入ったら　options　項目を復活
     case 2:
-        enterSettings();
-        break;
-    case 3:
         PostQuitMessage(0);
         break;
     default:
@@ -313,105 +283,17 @@ void MainMenuScene::activateRootItem(int index)
 
 void MainMenuScene::updateSettings(InputManager* input)
 {
-    if (input->isKeyPressed(Keyboard::Keys::Up) || input->isKeyPressed(Keyboard::Keys::W))
-    {
-        m_selectedIndex = (m_selectedIndex - 1 + SETTINGS_ITEM_COUNT) % SETTINGS_ITEM_COUNT;
-    }
-
-    if (input->isKeyPressed(Keyboard::Keys::Down) || input->isKeyPressed(Keyboard::Keys::S))
-    {
-        m_selectedIndex = (m_selectedIndex + 1) % SETTINGS_ITEM_COUNT;
-    }
-
-    const bool leftPressed = input->isKeyPressed(Keyboard::Keys::Left) || input->isKeyPressed(Keyboard::Keys::A);
-    const bool rightPressed = input->isKeyPressed(Keyboard::Keys::Right) || input->isKeyPressed(Keyboard::Keys::D);
-    if ((leftPressed || rightPressed) && m_selectedIndex == 0)
-    {
-        const int delta = rightPressed ? 1 : -1;
-        m_pendingResolutionIndex = (m_pendingResolutionIndex + delta + RESOLUTION_COUNT) % RESOLUTION_COUNT;
-    }
-
-    if (input->isKeyPressed(Keyboard::Keys::Enter) || input->isKeyPressed(Keyboard::Keys::Space))
-    {
-        activateSettingsItem(m_selectedIndex);
-        return;
-    }
-
+    // TODO(settings): 設定ページは空シェル
     if (input->isKeyPressed(Keyboard::Keys::Escape))
     {
         m_state = State::Root;
-        m_selectedIndex = 2;
-        return;
-    }
-
-    // マウス: ホバーで選択、クリックで決定
-    const Vector2 refMouse = toRefSpace(input->getMousePosition());
-    for (int i = 0; i < SETTINGS_ITEM_COUNT; i++)
-    {
-        if (ContainsPoint(SettingsButtonRect(i), refMouse))
-        {
-            m_selectedIndex = i;
-            if (input->isLeftMousePressed())
-            {
-                activateSettingsItem(i);
-            }
-            break;
-        }
-    }
-}
-
-void MainMenuScene::activateSettingsItem(int index)
-{
-    if (index == 0)
-    {
-        m_pendingResolutionIndex = (m_pendingResolutionIndex + 1) % RESOLUTION_COUNT;
-    }
-    else if (index == 1)
-    {
-        applySettings();
-    }
-    else if (index == 2)
-    {
-        m_state = State::Root;
-        m_selectedIndex = 2;
+        m_selectedIndex = 0;
     }
 }
 
 Vector2 MainMenuScene::toRefSpace(const Vector2& windowPos) const
 {
-    // マウスはウィンドウピクセル座標、メニューは 1920x1080 基準座標
-    UIRenderer* ui = m_renderer ? m_renderer->GetUI() : nullptr;
-    if (!ui || ui->scaleX() <= 0.0f || ui->scaleY() <= 0.0f)
-    {
-        return windowPos;
-    }
-    return Vector2(windowPos.x / ui->scaleX(), windowPos.y / ui->scaleY());
-}
-
-void MainMenuScene::enterSettings()
-{
-    m_state = State::Settings;
-    m_selectedIndex = 0;
-
-    const int currentW = m_context->renderer->GetRenderWidth();
-    const int currentH = m_context->renderer->GetRenderHeight();
-
-    m_pendingResolutionIndex = 0;
-    for (int i = 0; i < RESOLUTION_COUNT; i++)
-    {
-        if (RESOLUTIONS[i].width == currentW && RESOLUTIONS[i].height == currentH)
-        {
-            m_pendingResolutionIndex = i;
-            break;
-        }
-    }
-}
-
-void MainMenuScene::applySettings()
-{
-    m_context->game->applyResolution(
-        RESOLUTIONS[m_pendingResolutionIndex].width,
-        RESOLUTIONS[m_pendingResolutionIndex].height);
+    return m_renderer ? m_renderer->WindowToRef(windowPos) : windowPos;
 }
 
 void MainMenuScene::render()
@@ -539,7 +421,7 @@ void MainMenuScene::renderRoot()
         XMFLOAT2(MENU_CENTER_X, ROOT_TITLE_CENTER_Y),
         MENU_TITLE_COLOR, 1.0f, FontType::Title);
 
-    const wchar_t* menuItems[ROOT_ITEM_COUNT] = { L"start game", L"workshop", L"options", L"exit" };
+    const wchar_t* menuItems[ROOT_ITEM_COUNT] = { L"start game", L"workshop", L"exit" };
     for (int i = 0; i < ROOT_ITEM_COUNT; i++)
     {
         DrawMenuTextItem(ui, menuItems[i], RootButtonRect(i), i == m_selectedIndex);
@@ -550,21 +432,5 @@ void MainMenuScene::renderRoot()
 
 void MainMenuScene::renderSettings()
 {
-    UIRenderer* ui = m_renderer->GetUI();
-    ui->begin();
-
-    ui->drawTextCentered(L"options",
-        XMFLOAT2(MENU_CENTER_X, SETTINGS_TITLE_CENTER_Y),
-        MENU_TITLE_COLOR, 1.0f, FontType::Title);
-
-    const std::wstring resolutionLabel = RESOLUTIONS[m_pendingResolutionIndex].label;
-    const std::wstring resolutionRow = (m_selectedIndex == 0)
-        ? L"resolution  <  " + resolutionLabel + L"  >"
-        : L"resolution     " + resolutionLabel;
-
-    DrawMenuTextItem(ui, resolutionRow, SettingsButtonRect(0), m_selectedIndex == 0);
-    DrawMenuTextItem(ui, L"apply", SettingsButtonRect(1), m_selectedIndex == 1);
-    DrawMenuTextItem(ui, L"back", SettingsButtonRect(2), m_selectedIndex == 2);
-
-    ui->end();
+    // TODO(settings): 空シェル
 }

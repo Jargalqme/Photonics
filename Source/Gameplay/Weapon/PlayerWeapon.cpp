@@ -2,7 +2,6 @@
 #include "Gameplay/Weapon/PlayerWeapon.h"
 #include "Gameplay/Weapon/WeaponShot.h"
 #include "Gameplay/Weapon/Weapon.h"
-#include "Gameplay/Weapon/WeaponRifle.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
 #include "Services/SceneContext.h"
 
@@ -11,7 +10,7 @@ using namespace DirectX::SimpleMath;
 
 PlayerWeapon::PlayerWeapon(SceneContext& context)
     : m_context(&context)
-    , m_combat(std::make_unique<WeaponRifle>())
+    , m_combat(std::make_unique<Weapon>())
 {
 }
 

@@ -38,10 +38,12 @@ public:
 
     void BeginViewmodelPass();
 
-    void SetRenderResolution(int width, int height);
+    static constexpr int kRenderWidth  = 1920;
+    static constexpr int kRenderHeight = 1080;
 
-    [[nodiscard]] int GetRenderWidth() const;
-    [[nodiscard]] int GetRenderHeight() const;
+    [[nodiscard]] int GetRenderWidth()  const { return kRenderWidth;  }
+    [[nodiscard]] int GetRenderHeight() const { return kRenderHeight; }
+    [[nodiscard]] DirectX::SimpleMath::Vector2 WindowToRef(const DirectX::SimpleMath::Vector2& windowPos) const;
 
     void ApplyPostProcess();
 
@@ -57,6 +59,9 @@ private:
         const DirectX::SimpleMath::Matrix& projection,
         const DirectX::SimpleMath::Vector3& cameraPosition,
         const SceneLighting& lighting);
+
+    void CreateSceneResources();
+    D3D11_VIEWPORT m_contentViewport = {};
 
     // Device resources (not owned by this class)
     DX::DeviceResources* m_deviceResources;
@@ -82,7 +87,4 @@ private:
 
     com_ptr<ID3D11Texture2D>        m_sceneDepthTexture;
     com_ptr<ID3D11DepthStencilView> m_sceneDSV;
-
-    int m_renderWidth = 0;
-    int m_renderHeight = 0;
 };

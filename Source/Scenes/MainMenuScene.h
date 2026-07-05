@@ -33,10 +33,7 @@ private:
     State m_state = State::Root;
     int m_selectedIndex = 0;
 
-    static constexpr int ROOT_ITEM_COUNT = 4;
-    static constexpr int SETTINGS_ITEM_COUNT = 3;
-
-    int m_pendingResolutionIndex = 0;
+    static constexpr int ROOT_ITEM_COUNT = 3;
 
     DirectX::SimpleMath::Vector3 m_menuCameraPosition{ 0.0f, 24.0f, -110.0f };
     DirectX::SimpleMath::Vector3 m_menuCameraRotationDegrees{ -3.0f, 0.0f, 0.0f };
@@ -45,7 +42,6 @@ private:
     void updateRoot(InputManager* input);
     void updateSettings(InputManager* input);
     void activateRootItem(int index);
-    void activateSettingsItem(int index);
     DirectX::SimpleMath::Vector2 toRefSpace(
         const DirectX::SimpleMath::Vector2& windowPos) const;
     void renderMenuWorld(
@@ -54,6 +50,4 @@ private:
     void renderTuningPanel();
     void renderRoot();
     void renderSettings();
-    void enterSettings();
-    void applySettings();
 };

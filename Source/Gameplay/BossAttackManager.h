@@ -31,14 +31,11 @@ private:
     };
 
     // --- 弾パラメータ ---
-    static constexpr float BULLET_SPEED    = 15.0f;
     static constexpr float BULLET_LIFETIME = 5.0f;
     static constexpr float BULLET_DAMAGE   = 15.0f;
 
     // フォーリングレイン
     static constexpr float RAIN_SPAWN_HEIGHT    = 12.0f;
-    static constexpr int   RAIN_BULLET_COUNT    = 45;
-    static constexpr float RAIN_ANGLE_JITTER    = 0.3f;    // 角度のばらつき
     static constexpr int   RAIN_RING_COUNT      = 30;
 
     // 展開フェーズ

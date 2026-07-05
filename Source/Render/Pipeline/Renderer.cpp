@@ -6,11 +6,14 @@
 #include "Render/Pipeline/RenderUtil.h"
 
 #include <cstddef>
+#include <algorithm>
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
-
+static_assert(Renderer::kRenderWidth == int(UIRenderer::REF_WIDTH)
+    && Renderer::kRenderHeight == int(UIRenderer::REF_HEIGHT),
+    "R4: UI reference space is assumed identical to render resolution");
 namespace
 {
     struct ImportedModelCB
@@ -114,18 +117,20 @@ void Renderer::CreateDeviceDependentResources()
     m_ui->createDeviceDependentResources(
         m_deviceResources->GetD3DDevice(),
         m_deviceResources->GetD3DDeviceContext());
+
+    // UI参照空間（1920x1080）＝レンダー空間
+    m_ui->setScreenSize(float(kRenderWidth), float(kRenderHeight));
+
+    CreateSceneResources();
 }
 
-void Renderer::CreateWindowSizeDependentResources()
+void Renderer::CreateSceneResources()
 {
-    // シーン HDR テクスチャ + ブルームはレンダー解像度ベース
-    int renderW = GetRenderWidth();
-    int renderH = GetRenderHeight();
-    m_sceneRenderer->createWindowSizeDependentResources(renderW, renderH);
+    m_sceneRenderer->createWindowSizeDependentResources(kRenderWidth, kRenderHeight);
 
     auto device = m_deviceResources->GetD3DDevice();
-    UINT width = static_cast<UINT>(renderW);
-    UINT height = static_cast<UINT>(renderH);
+    UINT width = static_cast<UINT>(kRenderWidth);
+    UINT height = static_cast<UINT>(kRenderHeight);
 
     D3D11_TEXTURE2D_DESC texDesc = {};
     texDesc.Width = width;
@@ -159,50 +164,32 @@ void Renderer::CreateWindowSizeDependentResources()
         m_sceneDepthTexture.ReleaseAndGetAddressOf()));
     DX::ThrowIfFailed(device->CreateDepthStencilView(m_sceneDepthTexture.Get(), nullptr,
         m_sceneDSV.ReleaseAndGetAddressOf()));
-
-    // UI スケーリングはバックバッファ（ウィンドウ）サイズ
-    auto windowSize = m_deviceResources->GetOutputSize();
-    m_ui->setScreenSize(
-        static_cast<float>(windowSize.right - windowSize.left),
-        static_cast<float>(windowSize.bottom - windowSize.top));
 }
 
-void Renderer::SetRenderResolution(int width, int height)
+void Renderer::CreateWindowSizeDependentResources()
 {
-    if (width == m_renderWidth && height == m_renderHeight)
-    {
-        return;
-    }
-    m_renderWidth = width;
-    m_renderHeight = height;
-    CreateWindowSizeDependentResources();
-}
+    const auto windowSize = m_deviceResources->GetOutputSize();
+    const float windowW = float(windowSize.right - windowSize.left);
+    const float windowH = float(windowSize.bottom - windowSize.top);
 
-int Renderer::GetRenderWidth() const
-{
-    if (m_renderWidth > 0)
-    {
-        return m_renderWidth;
-    }
-    auto size = m_deviceResources->GetOutputSize();
-    return int(size.right - size.left);
-}
+    const float scale = std::min(
+        windowW / float(kRenderWidth),
+        windowH / float(kRenderHeight));
 
-int Renderer::GetRenderHeight() const
-{
-    if (m_renderHeight > 0)
-    {
-        return m_renderHeight;
-    }
-    auto size = m_deviceResources->GetOutputSize();
-    return int(size.bottom - size.top);
+    m_contentViewport.Width    = float(kRenderWidth)  * scale;
+    m_contentViewport.Height   = float(kRenderHeight) * scale;
+    m_contentViewport.TopLeftX = (windowW - m_contentViewport.Width)  * 0.5f;
+    m_contentViewport.TopLeftY = (windowH - m_contentViewport.Height) * 0.5f;
+    m_contentViewport.MinDepth = 0.0f;
+    m_contentViewport.MaxDepth = 1.0f;
 }
 
 void Renderer::ApplyPostProcess()
 {
     m_sceneRenderer->renderPostProcess(
         m_sceneSRV.Get(),
-        m_deviceResources->GetRenderTargetView());
+        m_deviceResources->GetRenderTargetView(),
+        m_contentViewport);
 }
 
 void Renderer::OnDeviceLost()
@@ -259,13 +246,20 @@ void Renderer::BeginScene()
 void Renderer::EndScene()
 {
     auto context = m_deviceResources->GetD3DDeviceContext();
-
-    // Unbind scene texture so we can read from it
-    ID3D11RenderTargetView* nullRTV = nullptr;
-    context->OMSetRenderTargets(1, &nullRTV, nullptr);
-
-    // Hand the HDR scene to SceneRenderer for post-process + backbuffer copy.
+    static const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    context->ClearRenderTargetView(m_deviceResources->GetRenderTargetView(), black);
     ApplyPostProcess();
+}
+
+Vector2 Renderer::WindowToRef(const Vector2& windowPos) const
+{
+    const float scale = m_contentViewport.Width / float(kRenderWidth);
+    if (scale <= 0.0f)
+    {
+        return windowPos;
+    }
+
+    return Vector2((windowPos.x - m_contentViewport.TopLeftX) / scale, (windowPos.y - m_contentViewport.TopLeftY) / scale);
 }
 
 void Renderer::CreateImportedModelResources()

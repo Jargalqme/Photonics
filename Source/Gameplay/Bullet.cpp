@@ -1,10 +1,18 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   Bullet.cpp
+//! @brief  敵弾 (ボス戦専用・プール管理)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/Bullet.h"
 #include "Common/Easing.h"
+#include "Render/Pipeline/RenderCommandQueue.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+//---------------------------------------------------------------------------
+//! プールから取り出した弾を初期化する
+//---------------------------------------------------------------------------
 void Bullet::initialize(
     const Vector3& position,
     const Vector3& direction,
@@ -18,7 +26,6 @@ void Bullet::initialize(
     m_maxSpeed = speed;
     m_minSpeed = speed * MIN_SPEED_RATIO;
     m_age = 0.0f;
-    m_totalLifetime = lifetime;
     m_lifetime = lifetime;
     m_damage = damage;
     m_color = color;
@@ -33,6 +40,9 @@ void Bullet::initialize(
     m_boundingSphere.Radius = COLLISION_RADIUS;
 }
 
+//---------------------------------------------------------------------------
+//! 移動・寿命・フェーズ切り替えを更新
+//---------------------------------------------------------------------------
 void Bullet::update(float deltaTime)
 {
     if (!m_active)
@@ -79,6 +89,9 @@ void Bullet::update(float deltaTime)
     m_boundingSphere.Center.z = m_position.z;
 }
 
+//---------------------------------------------------------------------------
+//! 指定秒数後に方向と速度を切り替える (レイン弾の展開 -> 落下)
+//---------------------------------------------------------------------------
 void Bullet::setPhaseSwitch(float delay, const Vector3& newDirection, float newSpeed)
 {
     m_hasPhaseSwitch = true;
@@ -87,16 +100,22 @@ void Bullet::setPhaseSwitch(float delay, const Vector3& newDirection, float newS
     m_phaseSpeed = newSpeed;
 }
 
-void Bullet::render(
-    DirectX::GeometricPrimitive* mesh,
-    const Matrix& view,
-    const Matrix& projection)
+//---------------------------------------------------------------------------
+//! 球メッシュを MeshCommand としてキューへ積む
+//---------------------------------------------------------------------------
+void Bullet::submitRender(RenderCommandQueue& queue, DirectX::GeometricPrimitive* mesh) const
 {
-    if (!m_active)
+    if (!m_active || !mesh)
     {
         return;
     }
 
-    Matrix world = Matrix::CreateScale(COLLISION_RADIUS) * Matrix::CreateTranslation(m_position);
-    mesh->Draw(world, view, projection, Colors::White);
+    // 単位球は直径 1 -> 半径 * 2 でスケールすると見た目が衝突半径と一致する
+    MeshCommand command;
+    command.mesh = mesh;
+    command.world = Matrix::CreateScale(COLLISION_RADIUS * 2.0f)
+        * Matrix::CreateTranslation(m_position);
+    command.color = Color(m_color.x, m_color.y, m_color.z, m_color.w);
+    command.emissiveIntensity = EMISSIVE_INTENSITY;
+    queue.submit(command);
 }

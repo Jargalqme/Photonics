@@ -3,7 +3,7 @@
 #include <SpriteFont.h>
 #include <memory>
 #include <string>
-#include "Common/typedef.h"
+#include "Common/TypeDef.h"
 
 enum class FontType{ Title, Quote, Menu, Hud};
 

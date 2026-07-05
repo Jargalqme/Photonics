@@ -40,6 +40,7 @@ void FinalCompositePass::finalize()
 void FinalCompositePass::process(
     ID3D11ShaderResourceView* inputSRV,
     ID3D11RenderTargetView* outputRTV,
+    const D3D11_VIEWPORT& outputViewport,
     float exposure)
 {
     auto context = m_deviceResources->GetD3DDeviceContext();
@@ -49,8 +50,7 @@ void FinalCompositePass::process(
     context->OMSetDepthStencilState(nullptr, 0);
     context->RSSetState(nullptr);
 
-    auto viewport = m_deviceResources->GetScreenViewport();
-    context->RSSetViewports(1, &viewport);
+    context->RSSetViewports(1, &outputViewport);
 
     context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
     context->PSSetShader(m_pixelShader.Get(), nullptr, 0);

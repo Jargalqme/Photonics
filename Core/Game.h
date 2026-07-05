@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   Game.h
+//! @brief  ゲーム本体 — メインループと全サブシステムの所有者
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "DeviceResources.h"
 #include "StepTimer.h"
@@ -24,14 +28,17 @@ public:
 	Game(Game&&) = delete;
 	Game& operator=(Game&&) = delete;
 
+	//! ウィンドウ作成後の一括初期化（D3D -> サブシステム -> シーン登録 -> ImGui）
 	void Initialize(HWND window, int width, int height);
+
+	//! 1フレーム進める（更新 + 描画）メッセージの無い間、呼ばれ続ける
 	void Tick();
 
-	void applyResolution(int width, int height);
-
+	// IDeviceNotify — デバイスロスト / 復帰
 	void OnDeviceLost() override;
 	void OnDeviceRestored() override;
 
+	// ウィンドウメッセージ（Main.cpp の WndProc から呼ばれる）
 	void OnActivated();
 	void OnDeactivated();
 	void OnSuspending();
@@ -40,6 +47,7 @@ public:
 	void OnDisplayChange();
 	void OnWindowSizeChanged(int width, int height);
 
+	//! 既定のクライアント領域サイズを取得します
 	void GetDefaultSize(int& width, int& height) const noexcept;
 
 private:
@@ -48,16 +56,20 @@ private:
 
 	void CreateDeviceDependentResources();
 	void CreateWindowSizeDependentResources();
-	void ResizeWindowedClient(int width, int height);
 
-	std::unique_ptr<DX::DeviceResources> m_deviceResources;
-	DX::StepTimer m_timer;
-	SceneContext m_context;
-	std::unique_ptr<Renderer> m_renderer;
-	std::unique_ptr<InputManager> m_input;
-	std::unique_ptr<ShaderCache> m_shaders;
-	std::unique_ptr<MeshCache> m_meshes;
-	std::unique_ptr<ImportedModelCache> m_importedModels;
+	// 基盤 — デバイスは全サブシステムから参照されるため先頭（構築が最初・破棄が最後）
+	std::unique_ptr<DX::DeviceResources>   m_deviceResources;
+	DX::StepTimer                          m_timer;
+
+	// サブシステム
+	std::unique_ptr<Renderer>              m_renderer;
+	std::unique_ptr<InputManager>          m_input;
+	std::unique_ptr<ShaderCache>           m_shaders;
+	std::unique_ptr<MeshCache>             m_meshes;
+	std::unique_ptr<ImportedModelCache>    m_importedModels;
 	std::unique_ptr<DirectX::CommonStates> m_commonStates;
-	std::unique_ptr<SceneManager> m_sceneManager;
+
+	// シーン
+	std::unique_ptr<SceneManager>          m_sceneManager;
+	SceneContext                           m_context;   //!< シーンへ配る非所有サービス参照の束
 };

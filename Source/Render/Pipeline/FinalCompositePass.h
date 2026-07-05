@@ -20,6 +20,7 @@ public:
     void process(
         ID3D11ShaderResourceView* inputSRV,
         ID3D11RenderTargetView* outputRTV,
+        const D3D11_VIEWPORT& outputViewport,
         float exposure);
 
 private:

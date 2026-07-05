@@ -117,7 +117,6 @@
     <ClInclude Include="Source\Gameplay\Bullet.h" />
     <ClInclude Include="Source\Gameplay\BulletPool.h" />
     <ClInclude Include="Source\Render\Visuals\ParticleSystem.h" />
-    <ClInclude Include="Source\Render\Visuals\BulletRenderer.h" />
     <ClInclude Include="Source\Render\Visuals\Skybox.h" />
     <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
     <ClInclude Include="Source\Render\Visuals\Billboard.h" />
@@ -128,9 +127,6 @@
       <Filter>Weapon</Filter>
     </ClInclude>
     <ClInclude Include="Source\Gameplay\Weapon\Weapon.h">
-      <Filter>Weapon</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Gameplay\Weapon\WeaponRifle.h">
       <Filter>Weapon</Filter>
     </ClInclude>
     <ClInclude Include="Source\Services\SceneContext.h" />
@@ -153,15 +149,13 @@
     <ClInclude Include="Source\Gameplay\EventTypes.h" />
     <ClInclude Include="Source\Render\Pipeline\SceneRenderer.h" />
     <ClInclude Include="Source\Render\Pipeline\FinalCompositePass.h" />
-    <ClInclude Include="Source\Common\typedef.h" />
-    <ClInclude Include="Source\Common\camera.h" />
     <ClInclude Include="Source\Gameplay\PlayerCamera.h" />
     <ClInclude Include="Source\Render\Lighting\IndirectLight.h" />
     <ClInclude Include="Source\Render\Assets\PrimitiveMesh.h" />
     <ClInclude Include="Source\Render\Assets\PBRMaterialLoader.h" />
     <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
-    <ClInclude Include="Source\Render\Visuals\WaveSim.h" />
-    <ClInclude Include="Source\Render\Visuals\WaveSurface.h" />
+    <ClInclude Include="Source\Common\Camera.h" />
+    <ClInclude Include="Source\Common\TypeDef.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Services\InputManager.cpp" />
@@ -246,7 +240,6 @@
     <ClCompile Include="Source\Gameplay\Bullet.cpp" />
     <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
     <ClCompile Include="Source\Render\Visuals\ParticleSystem.cpp" />
-    <ClCompile Include="Source\Render\Visuals\BulletRenderer.cpp" />
     <ClCompile Include="Source\Render\Visuals\Skybox.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
     <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
@@ -256,9 +249,6 @@
       <Filter>Weapon</Filter>
     </ClCompile>
     <ClCompile Include="Source\Gameplay\Weapon\Weapon.cpp">
-      <Filter>Weapon</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Gameplay\Weapon\WeaponRifle.cpp">
       <Filter>Weapon</Filter>
     </ClCompile>
     <ClCompile Include="Source\Render\Assets\ShaderCache.cpp" />
@@ -274,12 +264,11 @@
     <ClCompile Include="Source\Gameplay\EventBus.cpp" />
     <ClCompile Include="Source\Render\Pipeline\SceneRenderer.cpp" />
     <ClCompile Include="Source\Render\Pipeline\FinalCompositePass.cpp" />
-    <ClCompile Include="Source\Common\camera.cpp" />
     <ClCompile Include="Source\Gameplay\PlayerCamera.cpp" />
     <ClCompile Include="Source\Render\Lighting\IndirectLight.cpp" />
     <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
     <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
-    <ClCompile Include="Source\Render\Visuals\WaveSurface.cpp" />
+    <ClCompile Include="Source\Common\Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -335,12 +324,6 @@
     <FxCompile Include="Shaders\PS_BeamBolt.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\VS_Orb.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\PS_Orb.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\VS_Particle.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -360,8 +343,6 @@
     <FxCompile Include="Shaders\PS_WaveWorld.hlsl" />
     <FxCompile Include="Shaders\PS_FinalComposite.hlsl" />
     <FxCompile Include="Shaders\CS_IrradianceConvolution.hlsl" />
-    <FxCompile Include="Shaders\PS_WaveSurface.hlsl" />
-    <FxCompile Include="Shaders\VS_WaveSurface.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Common.hlsli" />

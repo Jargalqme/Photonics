@@ -1,8 +1,7 @@
-﻿//
-// pch.h
-// Header for standard system include files.
-//
-
+﻿//---------------------------------------------------------------------------
+//! @file   pch.h
+//! @brief  プリコンパイル済みヘッダー — 標準システムインクルード
+//---------------------------------------------------------------------------
 #pragma once
 
 #include <winsdkver.h>
@@ -11,21 +10,21 @@
 #endif
 #include <sdkddkver.h>
 
-// Use the C++ standard templated min/max
+// C++ 標準のテンプレート版 min/max を使う
 #define NOMINMAX
 
-// DirectX apps don't need GDI
+// DirectX アプリに GDI は不要
 #define NODRAWTEXT
 #define NOGDI
 #define NOBITMAP
 
-// Include <mcx.h> if you need this
+// 必要なら <mcx.h> をインクルード
 #define NOMCX
 
-// Include <winsvc.h> if you need this
+// 必要なら <winsvc.h> をインクルード
 #define NOSERVICE
 
-// WinHelp is deprecated
+// WinHelp は非推奨
 #define NOHELP
 
 #define WIN32_LEAN_AND_MEAN
@@ -33,7 +32,7 @@
 
 #include <wrl/client.h>
 
-#include "Source/Common/typedef.h"
+#include "Source/Common/TypeDef.h"
 
 #include <d3d11_1.h>
 #include <dxgi1_6.h>
@@ -42,7 +41,7 @@
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 
-// DirectXTK includes
+// DirectXTK
 #include "GeometricPrimitive.h"
 #include "Effects.h"
 #include "CommonStates.h"
@@ -76,7 +75,7 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 namespace DX
 {
-    // Helper class for COM exceptions
+    // COM 例外用ヘルパークラス
     class com_exception : public std::exception
     {
     public:
@@ -93,7 +92,7 @@ namespace DX
         HRESULT result;
     };
 
-    // Helper utility converts D3D API failures into exceptions.
+    // D3D API の失敗を例外へ変換するヘルパー
     inline void ThrowIfFailed(HRESULT hr)
     {
         if (FAILED(hr))
@@ -103,7 +102,7 @@ namespace DX
     }
 }
 
-// Path Configuration
+// パス設定 — 実行ファイル基準で Shaders/ Assets/ を解決
 inline std::wstring GetExecutableDir()
 {
     wchar_t path[MAX_PATH];

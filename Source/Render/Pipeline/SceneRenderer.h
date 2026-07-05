@@ -33,7 +33,8 @@ public:
     // destination is the BGRA backbuffer RTV.
     void renderPostProcess(
         ID3D11ShaderResourceView* sceneSRV,
-        ID3D11RenderTargetView* backbuffer);
+        ID3D11RenderTargetView* backbuffer,
+        const D3D11_VIEWPORT& outputViewport);
 
     // Expose Bloom for DebugUI sliders. Owned, non-transferring.
     Bloom* getBloom() { return m_bloom.get(); }

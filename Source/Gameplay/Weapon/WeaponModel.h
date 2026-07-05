@@ -9,9 +9,9 @@ struct SceneContext;
 
 struct RifleModelSettings
 {
-    float targetLength = 1.68f;
+    float targetLength = 1.0f;
     DirectX::SimpleMath::Vector3 position = DirectX::SimpleMath::Vector3(-0.015f, -0.195f, 0.180f);
-    DirectX::SimpleMath::Vector3 rotationDegrees = DirectX::SimpleMath::Vector3(0.0f, 180.0f, 0.0f);
+    DirectX::SimpleMath::Vector3 rotationDegrees = DirectX::SimpleMath::Vector3(0.0f, 90.0f, 0.0f);
 };
 
 // First-person imported weapon model.

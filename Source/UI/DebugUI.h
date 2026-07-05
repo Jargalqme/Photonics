@@ -13,8 +13,6 @@ class Boss;
 class Bloom;
 struct SceneLighting;
 
-class WaveSurface;
-
 class DebugUI
 {
 public:
@@ -33,8 +31,6 @@ public:
     void setBloom(Bloom* bloom) { m_bloom = bloom; }
     void setExposurePtr(float* exposure) { m_exposure = exposure; }
     void setSceneLighting(SceneLighting* lighting) { m_lighting = lighting; }
-
-    void setWaveSurface(WaveSurface* wave) { m_waveSurface = wave; }
 
     void render();
 
@@ -65,6 +61,4 @@ private:
     SceneLighting* m_lighting = nullptr;
 
     bool m_showThirds = false;
-
-    WaveSurface* m_waveSurface = nullptr;
 };

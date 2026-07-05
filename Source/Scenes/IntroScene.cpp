@@ -117,9 +117,8 @@ void IntroScene::render()
     // 引用テキスト（画面下部中央に表示）
     if (m_quoteAlpha > 0.0f)
     {
-        auto size = m_deviceResources->GetOutputSize();
-        float centerX = (size.right - size.left) * 0.5f;
-        float centerY = (size.bottom - size.top) * 0.9f;
+        const float centerX = UIRenderer::REF_WIDTH * 0.5f;
+        const float centerY = UIRenderer::REF_HEIGHT * 0.9f;
 
         UIRenderer* ui = m_renderer->GetUI();
         ui->begin();

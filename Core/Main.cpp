@@ -1,7 +1,11 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   Main.cpp
+//! @brief  エントリーポイント — ウィンドウ生成と Win32 メッセージループ
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Game.h"
 
-// Forward declare ImGui handler
+// ImGui の Win32 メッセージハンドラ（WndProc で最初に呼ぶための前方宣言）
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 using namespace DirectX;
@@ -23,14 +27,16 @@ LPCWSTR g_szAppName = L"photonx";
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ExitGame() noexcept;
 
-// Indicates to hybrid graphics systems to prefer the discrete part by default
+// ハイブリッド GPU 環境（ノート PC 等）で高性能側の GPU を既定にさせる
 extern "C"
 {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-// Entry point
+//===========================================================================
+// エントリーポイント
+//===========================================================================
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -45,9 +51,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     g_game = std::make_unique<Game>();
 
-    // Register class and create window
+    // ウィンドウクラス登録とウィンドウ生成
     {
-        // Register class
+        // ウィンドウクラス登録
         WNDCLASSEXW wcex = {};
         wcex.cbSize = sizeof(WNDCLASSEXW);
         wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -61,7 +67,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         if (!RegisterClassExW(&wcex))
             return 1;
 
-        // Create window
+        // ウィンドウ生成
         int w, h;
         g_game->GetDefaultSize(w, h);
 
@@ -84,7 +90,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         g_game->Initialize(hwnd, rc.right - rc.left, rc.bottom - rc.top);
     }
 
-    // Main message loop
+    // メインループ — メッセージが無い間はゲームを進める
     MSG msg = {};
     while (WM_QUIT != msg.message)
     {
@@ -104,14 +110,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     return static_cast<int>(msg.wParam);
 }
 
-// Windows procedure
+//===========================================================================
+// ウィンドウプロシージャ
+//===========================================================================
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    // サイズ変更ドラッグ / サスペンド / 最小化の進行状態（重複通知の抑制用）
     static bool s_in_sizemove = false;
     static bool s_in_suspend = false;
     static bool s_minimized = false;
 
-    // Let ImGui handle input first
+    // まず ImGui にメッセージを処理させ、消費されたらゲームへは渡さない
     if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
         return true;
 
@@ -130,6 +139,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
         if (s_in_sizemove && game)
         {
+            // サイズ変更ドラッグ中もゲームを回し続ける
             game->Tick();
         }
         else
@@ -270,14 +280,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN:
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
         {
-            // Fullscreen is not implemented yet. Swallow Alt+Enter to suppress the system beep.
+            // フルスクリーンは未実装。Alt+Enter を握りつぶしてシステムビープを抑止する
             return 0;
         }
         break;
 
     case WM_MENUCHAR:
-        // A menu is active and the user presses a key that does not correspond
-        // to any mnemonic or accelerator key. Ignore so we don't produce an error beep.
+        // メニュー表示中に無効なキーが押されてもエラービープを鳴らさない
         return MAKELRESULT(0, MNC_CLOSE);
 
     default:
@@ -287,7 +296,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-// Exit helper
+// ゲーム終了要求 — メッセージループを抜けさせる
 void ExitGame() noexcept
 {
     PostQuitMessage(0);

@@ -26,8 +26,8 @@ Boss::Boss(SceneContext& context)
 
 void Boss::initialize()
 {
+    // 攻撃側の初期化は activate() で行う — この時点ではプール未接続（setBulletPool 前）
     buildBoss();
-    m_attacks.initialize(m_bulletPool);
 }
 
 void Boss::buildBoss()

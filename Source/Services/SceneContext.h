@@ -3,7 +3,6 @@
 //=============================================================================
 #pragma once
 
-class Game;
 class Renderer;
 class InputManager;
 class AudioManager;
@@ -15,7 +14,6 @@ namespace DX { class DeviceResources; }
 
 struct SceneContext
 {
-	Game*                  game         = nullptr;
 	DX::DeviceResources*   device       = nullptr;
 	Renderer*              renderer     = nullptr;
 	InputManager*          input        = nullptr;

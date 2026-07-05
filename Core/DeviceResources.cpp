@@ -1,8 +1,7 @@
-﻿//
-// DeviceResources.cpp - A wrapper for the Direct3D 11 device and swapchain
-//                       (requires DirectX 11.1 Runtime)
-//
-
+﻿//---------------------------------------------------------------------------
+//! @file   DeviceResources.cpp
+//! @brief  Direct3D 11 デバイスとスワップチェーンのラッパー
+//---------------------------------------------------------------------------
 #include "pch.h"
 #include "DeviceResources.h"
 
@@ -21,20 +20,20 @@ using Microsoft::WRL::ComPtr;
 namespace
 {
 #if defined(_DEBUG)
-    // Check for SDK Layer support.
+    // SDKレイヤーのサポートを確認
     inline bool SdkLayersAvailable() noexcept
     {
         HRESULT hr = D3D11CreateDevice(
             nullptr,
-            D3D_DRIVER_TYPE_NULL,       // There is no need to create a real hardware device.
+            D3D_DRIVER_TYPE_NULL,       // NULL ドライバー
             nullptr,
-            D3D11_CREATE_DEVICE_DEBUG,  // Check for the SDK layers.
-            nullptr,                    // Any feature level will do.
+            D3D11_CREATE_DEVICE_DEBUG,  // デバッグレイヤーをサポートするデバイスを作成
+            nullptr,
             0,
             D3D11_SDK_VERSION,
-            nullptr,                    // No need to keep the D3D device reference.
-            nullptr,                    // No need to know the feature level.
-            nullptr                     // No need to keep the D3D device context reference.
+            nullptr,
+            nullptr,
+            nullptr
             );
 
         return SUCCEEDED(hr);
@@ -60,7 +59,7 @@ namespace
     }
 }
 
-// Constructor for DeviceResources.
+// DeviceResourcesのコンストラクタ
 DeviceResources::DeviceResources(
     DXGI_FORMAT backBufferFormat,
     DXGI_FORMAT depthBufferFormat,
@@ -81,7 +80,7 @@ DeviceResources::DeviceResources(
 {
 }
 
-// Configures the Direct3D device, and stores handles to it and the device context.
+// Direct3Dデバイスを設定し、そのデバイス及びデバイスコンテキストへのハンドルを格納します
 void DeviceResources::CreateDeviceResources()
 {
     UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -89,7 +88,7 @@ void DeviceResources::CreateDeviceResources()
 #if defined(_DEBUG)
     if (SdkLayersAvailable())
     {
-        // If the project is in a debug build, enable debugging via SDK Layers with this flag.
+        // デバッグビルドでは SDK レイヤーによるデバッグを有効化
         creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
     }
     else
@@ -100,7 +99,7 @@ void DeviceResources::CreateDeviceResources()
 
     CreateFactory();
 
-    // Determines whether tearing support is available for fullscreen borderless windows.
+    // ボーダーレスフルスクリーン向けにテアリング対応の有無を確認
     if (m_options & c_AllowTearing)
     {
         BOOL allowTearing = FALSE;
@@ -121,7 +120,7 @@ void DeviceResources::CreateDeviceResources()
         }
     }
 
-    // Disable HDR if we are on an OS that can't support FLIP swap effects
+    // FLIP スワップエフェクト非対応の OS では HDR を無効化
     if (m_options & c_EnableHDR)
     {
         ComPtr<IDXGIFactory5> factory5;
@@ -134,7 +133,7 @@ void DeviceResources::CreateDeviceResources()
         }
     }
 
-    // Disable FLIP if not on a supporting OS
+    // 非対応 OS では FLIP を無効化
     if (m_options & c_FlipPresent)
     {
         ComPtr<IDXGIFactory4> factory4;
@@ -147,7 +146,7 @@ void DeviceResources::CreateDeviceResources()
         }
     }
 
-    // Determine DirectX hardware feature levels this app will support.
+    // このアプリが対応する DirectX ハードウェア機能レベル
     static const D3D_FEATURE_LEVEL s_featureLevels[] =
     {
         D3D_FEATURE_LEVEL_11_1,
@@ -174,7 +173,7 @@ void DeviceResources::CreateDeviceResources()
     ComPtr<IDXGIAdapter1> adapter;
     GetHardwareAdapter(adapter.GetAddressOf());
 
-    // Create the Direct3D 11 API device object and a corresponding context.
+    // Direct3D 11 デバイスと対応するコンテキストを作成
     ComPtr<ID3D11Device> device;
     ComPtr<ID3D11DeviceContext> context;
 
@@ -189,9 +188,9 @@ void DeviceResources::CreateDeviceResources()
             s_featureLevels,
             featLevelCount,
             D3D11_SDK_VERSION,
-            device.GetAddressOf(),  // Returns the Direct3D device created.
-            &m_d3dFeatureLevel,     // Returns feature level of device created.
-            context.GetAddressOf()  // Returns the device immediate context.
+            device.GetAddressOf(),  // 作成されたデバイスを受け取る
+            &m_d3dFeatureLevel,     // 実際に得られた機能レベルを受け取る
+            context.GetAddressOf()  // 即時コンテキストを受け取る
             );
     }
 #if defined(NDEBUG)
@@ -202,12 +201,11 @@ void DeviceResources::CreateDeviceResources()
 #else
     if (FAILED(hr))
     {
-        // If the initialization fails, fall back to the WARP device.
-        // For more information on WARP, see:
-        // http://go.microsoft.com/fwlink/?LinkId=286690
+        // 初期化に失敗した場合は WARP デバイス（ソフトウェアラスタライザ）へフォールバック。
+        // WARP の詳細: http://go.microsoft.com/fwlink/?LinkId=286690
         hr = D3D11CreateDevice(
             nullptr,
-            D3D_DRIVER_TYPE_WARP, // Create a WARP device instead of a hardware device.
+            D3D_DRIVER_TYPE_WARP, // ハードウェアデバイスの代わりに WARP デバイスを作成
             nullptr,
             creationFlags,
             s_featureLevels,
@@ -255,7 +253,7 @@ void DeviceResources::CreateDeviceResources()
     ThrowIfFailed(context.As(&m_d3dAnnotation));
 }
 
-// These resources need to be recreated every time the window size is changed.
+// ウィンドウサイズが変わるたびに作り直しが必要なリソース群
 void DeviceResources::CreateWindowSizeDependentResources()
 {
     if (!m_window)
@@ -263,7 +261,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
         throw std::logic_error("Call SetWindow with a valid Win32 window handle");
     }
 
-    // Clear the previous window size specific context.
+    // 以前のウィンドウサイズ固有のバインドを解除
     m_d3dContext->OMSetRenderTargets(0, nullptr, nullptr);
     m_d3dRenderTargetView.Reset();
     m_d3dDepthStencilView.Reset();
@@ -271,14 +269,14 @@ void DeviceResources::CreateWindowSizeDependentResources()
     m_depthStencil.Reset();
     m_d3dContext->Flush();
 
-    // Determine the render target size in pixels.
+    // レンダーターゲットサイズ（ピクセル）を決定
     const UINT backBufferWidth = std::max<UINT>(static_cast<UINT>(m_outputSize.right - m_outputSize.left), 1u);
     const UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
     const DXGI_FORMAT backBufferFormat = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? NoSRGB(m_backBufferFormat) : m_backBufferFormat;
 
     if (m_swapChain)
     {
-        // If the swap chain already exists, resize it.
+        // スワップチェーンが既にあればリサイズ
         HRESULT hr = m_swapChain->ResizeBuffers(
             m_backBufferCount,
             backBufferWidth,
@@ -295,11 +293,11 @@ void DeviceResources::CreateWindowSizeDependentResources()
                 static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr));
             OutputDebugStringA(buff);
 #endif
-            // If the device was removed for any reason, a new device and swap chain will need to be created.
+            // デバイスが失われた場合はデバイスとスワップチェーンの再作成が必要
             HandleDeviceLost();
 
-            // Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
-            // and correctly set up the new device.
+            // HandleDeviceLost がこのメソッドへ再入して新しいデバイスを正しく構築するため、
+            // ここで処理を打ち切る
             return;
         }
         else
@@ -309,7 +307,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
     }
     else
     {
-        // Create a descriptor for the swap chain.
+        // スワップチェーンの記述子を作成
         DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
         swapChainDesc.Width = backBufferWidth;
         swapChainDesc.Height = backBufferHeight;
@@ -326,7 +324,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
         fsSwapChainDesc.Windowed = TRUE;
 
-        // Create a SwapChain from a Win32 window.
+        // Win32 ウィンドウからスワップチェーンを作成
         ThrowIfFailed(m_dxgiFactory->CreateSwapChainForHwnd(
             m_d3dDevice.Get(),
             m_window,
@@ -335,14 +333,14 @@ void DeviceResources::CreateWindowSizeDependentResources()
             nullptr, m_swapChain.ReleaseAndGetAddressOf()
             ));
 
-        // This class does not support exclusive full-screen mode and prevents DXGI from responding to the ALT+ENTER shortcut
+        // このクラスは排他フルスクリーン非対応。DXGI が ALT+ENTER に反応しないようにする
         ThrowIfFailed(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
     }
 
-    // Handle color space settings for HDR
+    // HDR 用の色空間設定
     UpdateColorSpace();
 
-    // Create a render target view of the swap chain back buffer.
+    // バックバッファのレンダーターゲットビューを作成
     ThrowIfFailed(m_swapChain->GetBuffer(0, IID_PPV_ARGS(m_renderTarget.ReleaseAndGetAddressOf())));
 
     CD3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc(D3D11_RTV_DIMENSION_TEXTURE2D, m_backBufferFormat);
@@ -354,13 +352,13 @@ void DeviceResources::CreateWindowSizeDependentResources()
 
     if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
     {
-        // Create a depth stencil view for use with 3D rendering if needed.
+        // 3D 描画用のデプスステンシルビューを作成（必要な場合のみ）
         CD3D11_TEXTURE2D_DESC depthStencilDesc(
             m_depthBufferFormat,
             backBufferWidth,
             backBufferHeight,
-            1, // Use a single array entry.
-            1, // Use a single mipmap level.
+            1, // 配列サイズは 1
+            1, // ミップレベルは 1
             D3D11_BIND_DEPTH_STENCIL
             );
 
@@ -377,11 +375,11 @@ void DeviceResources::CreateWindowSizeDependentResources()
             ));
     }
 
-    // Set the 3D rendering viewport to target the entire window.
+    // 3D 描画ビューポートをウィンドウ全体に設定
     m_screenViewport = { 0.0f, 0.0f, static_cast<float>(backBufferWidth), static_cast<float>(backBufferHeight), 0.f, 1.f };
 }
 
-// This method is called when the Win32 window is created (or re-created).
+// Win32 ウィンドウの作成（再作成）時に呼ばれる
 void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
 {
     m_window = window;
@@ -391,7 +389,7 @@ void DeviceResources::SetWindow(HWND window, int width, int height) noexcept
     m_outputSize.bottom = static_cast<long>(height);
 }
 
-// This method is called when the Win32 window changes size
+// Win32 ウィンドウのサイズ変更時に呼ばれる
 bool DeviceResources::WindowSizeChanged(int width, int height)
 {
     if (!m_window)
@@ -403,7 +401,7 @@ bool DeviceResources::WindowSizeChanged(int width, int height)
     newRc.bottom = static_cast<long>(height);
     if (newRc.right == m_outputSize.right && newRc.bottom == m_outputSize.bottom)
     {
-        // Handle color space settings for HDR
+        // HDR 用の色空間設定
         UpdateColorSpace();
 
         return false;
@@ -414,7 +412,7 @@ bool DeviceResources::WindowSizeChanged(int width, int height)
     return true;
 }
 
-// Recreate all device resources and set them back to the current state.
+// 全デバイスリソースを再作成し、現在の状態へ復元する
 void DeviceResources::HandleDeviceLost()
 {
     if (m_deviceNotify)
@@ -452,36 +450,33 @@ void DeviceResources::HandleDeviceLost()
     }
 }
 
-// Present the contents of the swap chain to the screen.
+// スワップチェーンの内容を画面へ表示する
 void DeviceResources::Present()
 {
     HRESULT hr = E_FAIL;
     if (m_options & c_AllowTearing)
     {
-        // Recommended to always use tearing if supported when using a sync interval of 0.
+        // 同期間隔 0 の場合、対応環境では常にテアリングを使うことが推奨されている
         hr = m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
     }
     else
     {
-        // The first argument instructs DXGI to block until VSync, putting the application
-        // to sleep until the next VSync. This ensures we don't waste any cycles rendering
-        // frames that will never be displayed to the screen.
+        // 第 1 引数により DXGI は VSync までブロックし、アプリは次の VSync まで眠る。
+        // 画面に表示されないフレームの描画にサイクルを浪費しないため
         hr = m_swapChain->Present(1, 0);
     }
 
-    // Discard the contents of the render target.
-    // This is a valid operation only when the existing contents will be entirely
-    // overwritten. If dirty or scroll rects are used, this call should be removed.
+    // レンダーターゲットの内容を破棄。
+    // 全面を描き直す場合にのみ有効な操作（ダーティ矩形やスクロール矩形を使うなら削除すること）
     m_d3dContext->DiscardView(m_d3dRenderTargetView.Get());
 
     if (m_d3dDepthStencilView)
     {
-        // Discard the contents of the depth stencil.
+        // デプスステンシルの内容を破棄
         m_d3dContext->DiscardView(m_d3dDepthStencilView.Get());
     }
 
-    // If the device was removed either by a disconnection or a driver upgrade, we
-    // must recreate all device resources.
+    // 切断やドライバー更新でデバイスが失われた場合は、全デバイスリソースを再作成する
     if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
     {
 #ifdef _DEBUG
@@ -520,7 +515,7 @@ void DeviceResources::CreateFactory()
 
             DXGI_INFO_QUEUE_MESSAGE_ID hide[] =
             {
-                80 /* IDXGISwapChain::GetContainingOutput: The swapchain's adapter does not control the output on which the swapchain's window resides. */,
+                80,
             };
             DXGI_INFO_QUEUE_FILTER filter = {};
             filter.DenyList.NumIDs = static_cast<UINT>(std::size(hide));
@@ -535,8 +530,8 @@ void DeviceResources::CreateFactory()
     ThrowIfFailed(CreateDXGIFactory1(IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
 }
 
-// This method acquires the first available hardware adapter.
-// If no such adapter can be found, *ppAdapter will be set to nullptr.
+// 最初に利用可能なハードウェアアダプターを取得する。
+// 見つからない場合は *ppAdapter に nullptr が設定される
 void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 {
     *ppAdapter = nullptr;
@@ -559,7 +554,7 @@ void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 
             if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
             {
-                // Don't select the Basic Render Driver adapter.
+                // Basic Render Driver アダプターは選ばない
                 continue;
             }
 
@@ -586,7 +581,7 @@ void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 
             if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
             {
-                // Don't select the Basic Render Driver adapter.
+                // Basic Render Driver アダプターは選ばない
                 continue;
             }
 
@@ -603,7 +598,7 @@ void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
     *ppAdapter = adapter.Detach();
 }
 
-// Sets the color space for the swap chain in order to handle HDR output.
+// HDR 出力に対応するため、スワップチェーンの色空間を設定する
 void DeviceResources::UpdateColorSpace()
 {
     if (!m_dxgiFactory)
@@ -611,7 +606,7 @@ void DeviceResources::UpdateColorSpace()
 
     if (!m_dxgiFactory->IsCurrent())
     {
-        // Output information is cached on the DXGI Factory. If it is stale we need to create a new factory.
+        // 出力情報は DXGI ファクトリにキャッシュされる。古くなっていたらファクトリを作り直す
         CreateFactory();
     }
 
@@ -621,11 +616,10 @@ void DeviceResources::UpdateColorSpace()
 
     if (m_swapChain)
     {
-        // To detect HDR support, we will need to check the color space in the primary
-        // DXGI output associated with the app at this point in time
-        // (using window/display intersection).
+        // HDR 対応の検出には、この時点でアプリに対応する主要 DXGI 出力の色空間を
+        // （ウィンドウとディスプレイの交差判定で）調べる必要がある
 
-        // Get the retangle bounds of the app window.
+        // アプリウィンドウの矩形範囲を取得
         RECT windowBounds;
         if (!GetWindowRect(m_window, &windowBounds))
             throw std::system_error(std::error_code(static_cast<int>(GetLastError()), std::system_category()), "GetWindowRect");
@@ -648,12 +642,12 @@ void DeviceResources::UpdateColorSpace()
                 SUCCEEDED(adapter->EnumOutputs(outputIndex, output.ReleaseAndGetAddressOf()));
                 ++outputIndex)
             {
-                // Get the rectangle bounds of current output.
+                // 現在の出力の矩形範囲を取得
                 DXGI_OUTPUT_DESC desc;
                 ThrowIfFailed(output->GetDesc(&desc));
                 const auto& r = desc.DesktopCoordinates;
 
-                // Compute the intersection
+                // 交差面積を計算
                 const long intersectArea = ComputeIntersectionArea(ax1, ay1, ax2, ay2, r.left, r.top, r.right, r.bottom);
                 if (intersectArea > bestIntersectArea)
                 {
@@ -673,7 +667,7 @@ void DeviceResources::UpdateColorSpace()
 
                 if (desc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)
                 {
-                    // Display output is HDR10.
+                    // ディスプレイ出力は HDR10
                     isDisplayHDR10 = true;
                 }
             }
@@ -685,12 +679,12 @@ void DeviceResources::UpdateColorSpace()
         switch (m_backBufferFormat)
         {
         case DXGI_FORMAT_R10G10B10A2_UNORM:
-            // The application creates the HDR10 signal.
+            // アプリケーション側で HDR10 信号を生成する
             colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
             break;
 
         case DXGI_FORMAT_R16G16B16A16_FLOAT:
-            // The system creates the HDR10 signal; application uses linear values.
+            // システム側で HDR10 信号を生成し、アプリはリニア値を使う
             colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709;
             break;
 

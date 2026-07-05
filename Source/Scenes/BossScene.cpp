@@ -7,7 +7,7 @@
 #include "Render/Pipeline/Renderer.h"
 #include "Render/Pipeline/Bloom.h"
 #include "Render/Pipeline/SceneRenderer.h"
-#include "Render/Assets/ImportedModelCache.h"
+#include "Render/Assets/MeshCache.h"
 #include "Gameplay/Weapon/WeaponShot.h"
 #include "Gameplay/EventTypes.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
@@ -71,8 +71,8 @@ void BossScene::initialize(SceneContext& context)
     m_particleSystem = std::make_unique<ParticleSystem>(m_deviceResources);
     m_particleSystem->initialize();
 
-    m_bulletRenderer = std::make_unique<BulletRenderer>(m_deviceResources);
-    m_bulletRenderer->initialize();
+    // 弾は低テッセレーションの球メッシュで描く（MeshCache 所有・借用ポインタ）
+    m_bulletMesh = m_context->meshes->getSphere(8);
 
     m_tracers = std::make_unique<Tracers>(*m_context);
     m_tracers->initialize();
@@ -118,20 +118,6 @@ void BossScene::initialize(SceneContext& context)
 
     m_indirectLight = std::make_unique<IndirectLight>(m_deviceResources);
     m_indirectLight->initialize(m_skybox->cubeSRV(), m_context->commonStates->LinearClamp());
-
-#ifdef _DEBUG
-    {
-        m_pbrSmokeModel = m_context->importedModels
-            ? m_context->importedModels->getWithAmbientCGMaterial(
-                "Assets/Weapons/Rifle/pistol.glb",
-                GetAssetPath(L"Textures/PBR/Stone"))
-            : nullptr;
-        if (!m_pbrSmokeModel)
-        {
-            OutputDebugStringA("[BossScene] Failed to load PBR smoke model.\n");
-        }
-    }
-#endif
 
     // UI
     m_gameUI = std::make_unique<GameUI>();
@@ -217,10 +203,7 @@ void BossScene::enter()
 
     m_boss->deactivate();
 
-    for (int i = 0; i < m_bulletPool.getMaxBullets(); i++)
-    {
-        m_bulletPool.getBullets()[i].deactivate();
-    }
+    m_bulletPool.deactivateAll();
 
     // Boss starts directly; Stage 4 replaces this with the intro FSM.
     m_boss->setPlayerTarget(m_player->rootPositionPtr());
@@ -228,12 +211,9 @@ void BossScene::enter()
     m_boss->activate();
     EventBus::publish(WaveChangedEvent{ 3 });
 
-    // 戦闘ターゲットリスト構築 — Player + Boss
+    // ヒットスキャンターゲット構築 — Boss のみ（敵弾は Player へ直接解決）
     m_shotTargets.clear();
     m_shotTargets.push_back(m_boss.get());
-
-    m_bulletTargets.clear();
-    m_bulletTargets.push_back(m_player.get());
 
     // オーディオリセット
     m_beatTracker->reset();
@@ -268,17 +248,14 @@ void BossScene::finalize()
     if (m_player)         { m_player->finalize(); }
     if (m_boss)           { m_boss->finalize(); }
     if (m_particleSystem) { m_particleSystem->finalize(); }
-    if (m_bulletRenderer) { m_bulletRenderer->finalize(); }
     if (m_tracers)        { m_tracers->finalize(); }
     m_camera->finalize();
 
-#ifdef _DEBUG
-    m_pbrSmokeModel = nullptr;
-#endif
+    // 借用ポインタを nullptr 化（実体は MeshCache が所有）
+    m_bulletMesh = nullptr;
 
     // オブジェクト破棄
     m_particleSystem.reset();
-    m_bulletRenderer.reset();
     m_tracers.reset();
     m_camera.reset();
     m_player.reset();
@@ -336,7 +313,9 @@ void BossScene::update(float deltaTime, InputManager* input)
         {
             m_boss->update(deltaTime);
         }
-        m_combatSystem.update(deltaTime, m_shotTargets, m_bulletTargets, m_bulletPool, weaponShots);
+        m_bulletPool.update(deltaTime);
+        m_combatSystem.update(m_shotTargets, weaponShots);
+        m_combatSystem.resolveBullets(m_bulletPool, *m_player);
     }
 
     EventBus::dispatchQueued();
@@ -360,7 +339,6 @@ void BossScene::update(float deltaTime, InputManager* input)
     m_gameUI->update(deltaTime);
     m_audioManager->update();
     m_particleSystem->update(deltaTime);
-    m_bulletRenderer->update(deltaTime);
     m_tracers->update(deltaTime);
     m_beatTracker->update(deltaTime);
     m_grid->setBeatPulse(m_beatTracker->getBeatProgress());
@@ -401,26 +379,15 @@ void BossScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector
 
     m_renderQueue.clear();
     m_boss->submitRender(m_renderQueue);
-
-#ifdef _DEBUG
-    if (m_pbrSmokeModel)
-    {
-        ImportedModelCommand command;
-        command.model = m_pbrSmokeModel;
-        command.world =
-            Matrix::CreateScale(4.0f)
-            * Matrix::CreateRotationY(XMConvertToRadians(180.0f))
-            * Matrix::CreateTranslation(0.0f, 1.5f, 6.0f);
-        command.color = Color(1.0f, 1.0f, 1.0f, 1.0f);
-        m_renderQueue.submit(command);
-    }
-#endif
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, proj, camPos, m_lighting);
 }
 
 void BossScene::renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
-    m_bulletRenderer->render(&m_bulletPool, view, proj, camPos);
+    m_renderQueue.clear();
+    m_bulletPool.submitRender(m_renderQueue, m_bulletMesh);
+    m_renderer->ExecuteRenderCommands(m_renderQueue, view, proj, camPos, m_lighting);
+
     m_particleSystem->render(view, proj);
     m_tracers->render(view, proj, camPos);
 }

@@ -1,27 +1,32 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   CombatSystem.cpp
+//! @brief  戦闘解決 (ヒットスキャン + 敵弾 vs プレイヤー)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "CombatSystem.h"
 
 #include "Gameplay/Bullet.h"
 #include "Gameplay/BulletPool.h"
 #include "Gameplay/CollisionSystem.h"
+#include "Gameplay/Player.h"
 #include "Gameplay/Weapon/WeaponShot.h"
 #include "Gameplay/EventBus.h"
 #include "Gameplay/EventTypes.h"
 
+//---------------------------------------------------------------------------
+//! ヒットスキャンを解決
+//---------------------------------------------------------------------------
 void CombatSystem::update(
-    float deltaTime,
     std::vector<ICombatTarget*>& shotTargets,
-    std::vector<ICombatTarget*>& bulletTargets,
-    BulletPool& bullets,
     std::vector<WeaponShot>& weaponShots)
 {
-    bullets.update(deltaTime);
     collectColliders(shotTargets, m_shotColliders);
-    collectColliders(bulletTargets, m_bulletColliders);
     resolveWeaponShots(weaponShots);
-    resolveBullets(bullets);
 }
 
+//---------------------------------------------------------------------------
+//! ターゲット群からヒットコライダを収集
+//---------------------------------------------------------------------------
 void CombatSystem::collectColliders(
     std::vector<ICombatTarget*>& targets,
     std::vector<CombatHitCollider>& out)
@@ -36,6 +41,9 @@ void CombatSystem::collectColliders(
     }
 }
 
+//---------------------------------------------------------------------------
+//! レイ vs 球で最近傍ヒットを確定し、トレーサーイベントを発行
+//---------------------------------------------------------------------------
 void CombatSystem::resolveWeaponShots(std::vector<WeaponShot>& shots)
 {
     for (const auto& shot : shots)
@@ -75,8 +83,19 @@ void CombatSystem::resolveWeaponShots(std::vector<WeaponShot>& shots)
     shots.clear();
 }
 
-void CombatSystem::resolveBullets(BulletPool& bullets)
+//---------------------------------------------------------------------------
+//! 敵弾 vs プレイヤーを解決 (ボス戦専用)
+//---------------------------------------------------------------------------
+void CombatSystem::resolveBullets(BulletPool& bullets, Player& player)
 {
+    // 無敵・死亡中はコライダが積まれない = 弾がすり抜ける（従来挙動を維持）
+    m_bulletColliders.clear();
+    player.collectHitColliders(m_bulletColliders);
+    if (m_bulletColliders.empty())
+    {
+        return;
+    }
+
     Bullet* arr = bullets.getBullets();
     const int n = bullets.getMaxBullets();
 

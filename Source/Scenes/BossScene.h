@@ -11,7 +11,6 @@
 #include "Render/Visuals/Skybox.h"
 #include "Render/Lighting/IndirectLight.h"
 #include "Render/Visuals/ArenaFloor.h"
-#include "Render/Visuals/BulletRenderer.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
 #include "Render/Lighting/SceneLighting.h"
@@ -78,12 +77,11 @@ private:
     std::unique_ptr<Boss>   m_boss;
 
     std::vector<ICombatTarget*> m_shotTargets;
-    std::vector<ICombatTarget*> m_bulletTargets;
     BulletPool   m_bulletPool;
     CombatSystem m_combatSystem;
+    DirectX::GeometricPrimitive* m_bulletMesh = nullptr;  // MeshCache から借用（非所有）
 
     std::unique_ptr<ParticleSystem> m_particleSystem;
-    std::unique_ptr<BulletRenderer> m_bulletRenderer;
     std::unique_ptr<Tracers> m_tracers;
     RenderCommandQueue m_renderQueue;
     SceneLighting m_lighting;
@@ -95,10 +93,6 @@ private:
     std::unique_ptr<ArenaFloor> m_arenaFloor;
     std::unique_ptr<Skybox> m_skybox;
     std::unique_ptr<IndirectLight> m_indirectLight;
-
-#ifdef _DEBUG
-    const ImportedModel* m_pbrSmokeModel = nullptr;
-#endif
 
     std::unique_ptr<GameUI> m_gameUI;
     std::unique_ptr<DebugUI> m_debugUI;

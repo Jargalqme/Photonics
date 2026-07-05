@@ -104,6 +104,9 @@
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -131,6 +134,9 @@
       <Command>xcopy /Y /I /E "$(ProjectDir)Assets" "$(TargetDir)Assets\"
 xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Debug\*.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -157,6 +163,9 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Debug\*.dll" "$(TargetDir)"<
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -189,11 +198,16 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Debug\*.dll" "$(TargetDir)"<
       <Command>xcopy /Y /I /E "$(ProjectDir)Assets" "$(TargetDir)Assets\"
 xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Core\DeviceResources.h" />
     <ClInclude Include="Core\Game.h" />
     <ClInclude Include="Core\pch.h" />
+    <ClInclude Include="Source\Common\Camera.h" />
+    <ClInclude Include="Source\Common\TypeDef.h" />
     <ClInclude Include="Source\Render\Pipeline\Renderer.h" />
     <ClInclude Include="Source\Render\Pipeline\UIRenderer.h" />
     <ClInclude Include="Core\StepTimer.h" />
@@ -205,8 +219,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
-    <ClInclude Include="Source\Common\camera.h" />
-    <ClInclude Include="Source\Common\typedef.h" />
     <ClInclude Include="Source\Gameplay\CombatSystem.h" />
     <ClInclude Include="Source\Gameplay\ICombatTarget.h" />
     <ClInclude Include="Source\Gameplay\EventBus.h" />
@@ -220,13 +232,10 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Source\Render\Assets\PrimitiveMesh.h" />
     <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
     <ClInclude Include="Source\Render\Pipeline\SceneRenderer.h" />
-    <ClInclude Include="Source\Render\Visuals\WaveSim.h" />
-    <ClInclude Include="Source\Render\Visuals\WaveSurface.h" />
     <ClInclude Include="Source\Services\AudioManager.h" />
     <ClInclude Include="Source\Render\Visuals\Billboard.h" />
     <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
     <ClInclude Include="Source\Gameplay\BossAttackManager.h" />
-    <ClInclude Include="Source\Render\Visuals\BulletRenderer.h" />
     <ClInclude Include="Source\Services\BeatTracker.h" />
     <ClInclude Include="Source\Gameplay\Bullet.h" />
     <ClInclude Include="Source\Gameplay\BulletPool.h" />
@@ -268,7 +277,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Source\Scenes\VictoryScene.h" />
     <ClInclude Include="Source\Gameplay\Weapon\Weapon.h" />
     <ClInclude Include="Source\Gameplay\Weapon\WeaponMotion.h" />
-    <ClInclude Include="Source\Gameplay\Weapon\WeaponRifle.h" />
     <ClInclude Include="ThirdParty\FastNoiseLite.h" />
   </ItemGroup>
   <ItemGroup>
@@ -279,6 +287,7 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Source\Common\Camera.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Renderer.cpp" />
     <ClCompile Include="Source\Render\Pipeline\UIRenderer.cpp" />
     <ClCompile Include="ImGui\imgui.cpp">
@@ -309,7 +318,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Source\Common\camera.cpp" />
     <ClCompile Include="Source\Gameplay\CombatSystem.cpp" />
     <ClCompile Include="Source\Gameplay\EventBus.cpp" />
     <ClCompile Include="Source\Gameplay\PlayerCamera.cpp" />
@@ -320,12 +328,10 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
     <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
     <ClCompile Include="Source\Render\Pipeline\SceneRenderer.cpp" />
-    <ClCompile Include="Source\Render\Visuals\WaveSurface.cpp" />
     <ClCompile Include="Source\Services\AudioManager.cpp" />
     <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
     <ClCompile Include="Source\Gameplay\BossAttackManager.cpp" />
-    <ClCompile Include="Source\Render\Visuals\BulletRenderer.cpp" />
     <ClCompile Include="Source\Services\BeatTracker.cpp" />
     <ClCompile Include="Source\Gameplay\Bullet.cpp" />
     <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
@@ -359,7 +365,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClCompile Include="Source\Scenes\VictoryScene.cpp" />
     <ClCompile Include="Source\Gameplay\Weapon\Weapon.cpp" />
     <ClCompile Include="Source\Gameplay\Weapon\WeaponMotion.cpp" />
-    <ClCompile Include="Source\Gameplay\Weapon\WeaponRifle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
@@ -397,11 +402,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
-    <FxCompile Include="Shaders\PS_WaveSurface.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Shaders\VS_ImportedModel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -633,26 +633,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
     </FxCompile>
-    <FxCompile Include="Shaders\VS_Orb.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
-    <FxCompile Include="Shaders\PS_Orb.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
     <FxCompile Include="Shaders\VS_Particle.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
@@ -682,11 +662,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
-    </FxCompile>
-    <FxCompile Include="Shaders\VS_WaveSurface.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)%(RelativeDir)%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <FxCompile Include="Shaders\VS_WaveWorld.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

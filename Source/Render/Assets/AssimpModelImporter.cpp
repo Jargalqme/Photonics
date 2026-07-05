@@ -10,7 +10,6 @@
 
 #include <fstream>
 #include <charconv>
-#include <sstream>
 #include <unordered_map>
 
 namespace
@@ -33,51 +32,15 @@ namespace
         return std::filesystem::exists(path, ec);
     }
 
-    std::string ToDisplayPath(const std::filesystem::path& path)
-    {
-        return path.generic_string();
-    }
-
     std::string ToString(const aiString& value)
     {
         return value.length > 0 ? std::string(value.C_Str()) : std::string();
-    }
-
-    uint32_t CountNodes(const aiNode* node)
-    {
-        if (!node)
-        {
-            return 0;
-        }
-
-        uint32_t count = 1;
-        for (unsigned int i = 0; i < node->mNumChildren; ++i)
-        {
-            count += CountNodes(node->mChildren[i]);
-        }
-        return count;
-    }
-
-    std::string BoolText(bool value)
-    {
-        return value ? "yes" : "no";
     }
 
     void TraceLine(const std::string& text)
     {
         OutputDebugStringA(text.c_str());
         OutputDebugStringA("\n");
-    }
-
-    std::string FormatColor(const std::array<float, 4>& color)
-    {
-        std::ostringstream out;
-        out << "("
-            << color[0] << ", "
-            << color[1] << ", "
-            << color[2] << ", "
-            << color[3] << ")";
-        return out.str();
     }
 
     DirectX::SimpleMath::Vector3 ToVector3(const aiVector3D& value)
@@ -112,21 +75,6 @@ namespace
     aiVector3D TransformOrigin(const aiMatrix4x4& transform)
     {
         return transform * aiVector3D(0.0f, 0.0f, 0.0f);
-    }
-
-    std::array<float, 3> ToArray3(const aiVector3D& value)
-    {
-        return { value.x, value.y, value.z };
-    }
-
-    std::string FormatVector3(const std::array<float, 3>& value)
-    {
-        std::ostringstream out;
-        out << "("
-            << value[0] << ", "
-            << value[1] << ", "
-            << value[2] << ")";
-        return out.str();
     }
 
     std::string FormatHint(const aiTexture& texture)
@@ -557,205 +505,6 @@ namespace
         }
     }
 
-    void CollectNamedNodeReports(
-        const aiNode* node,
-        const aiMatrix4x4& parentTransform,
-        std::vector<AssimpNamedNodeReport>& outNodes)
-    {
-        if (!node)
-        {
-            return;
-        }
-
-        const aiMatrix4x4 nodeTransform = parentTransform * node->mTransformation;
-        const std::string nodeName = ToString(node->mName);
-        if (IsViewmodelNodeName(nodeName))
-        {
-            AssimpNamedNodeReport nodeReport;
-            nodeReport.name = nodeName;
-            nodeReport.position = ToArray3(TransformOrigin(nodeTransform));
-            nodeReport.meshCount = node->mNumMeshes;
-            outNodes.push_back(std::move(nodeReport));
-        }
-
-        for (unsigned int i = 0; i < node->mNumChildren; ++i)
-        {
-            CollectNamedNodeReports(node->mChildren[i], nodeTransform, outNodes);
-        }
-    }
-
-    std::vector<std::string> BuildReportLines(const AssimpModelReport& report)
-    {
-        std::vector<std::string> lines;
-
-        auto add = [&lines](std::string line)
-        {
-            lines.push_back(std::move(line));
-        };
-
-        add("[AssimpModelImporter] Inspecting model");
-        add("  requested: " + ToDisplayPath(report.requestedPath));
-        add("  resolved:  " + ToDisplayPath(report.resolvedPath));
-
-        if (!report.loaded)
-        {
-            add("  load failed: " + report.error);
-            return lines;
-        }
-
-        add("  loaded: yes");
-        add("  nodes: " + std::to_string(report.nodeCount));
-        add("  meshes: " + std::to_string(report.meshCount));
-        add("  materials: " + std::to_string(report.materialCount));
-        add("  textures: " + std::to_string(report.textureCount));
-        add("  VM nodes: " + std::to_string(report.namedNodes.size()));
-
-        if (!report.error.empty())
-        {
-            add("  warning: " + report.error);
-        }
-
-        for (size_t i = 0; i < report.namedNodes.size(); ++i)
-        {
-            const AssimpNamedNodeReport& node = report.namedNodes[i];
-            add("  VM node[" + std::to_string(i) + "] " + node.name);
-            add("    position: " + FormatVector3(node.position));
-            add("    meshes: " + std::to_string(node.meshCount));
-        }
-
-        for (size_t i = 0; i < report.meshes.size(); ++i)
-        {
-            const AssimpMeshReport& mesh = report.meshes[i];
-            add("  mesh[" + std::to_string(i) + "] " + mesh.name);
-            add("    vertices: " + std::to_string(mesh.vertexCount));
-            add("    faces: " + std::to_string(mesh.faceCount));
-            add("    material: " + std::to_string(mesh.materialIndex));
-            add("    normals: " + BoolText(mesh.hasNormals));
-            add("    texcoords: " + BoolText(mesh.hasTexCoords));
-            add("    tangents: " + BoolText(mesh.hasTangents));
-        }
-
-        for (size_t i = 0; i < report.materials.size(); ++i)
-        {
-            const AssimpMaterialReport& material = report.materials[i];
-            add("  material[" + std::to_string(i) + "] " + material.name);
-            add("    base color: " + FormatColor(material.baseColor));
-
-            if (!material.baseColorTexture.empty())
-            {
-                add("    base color texture: " + material.baseColorTexture);
-            }
-
-            if (!material.diffuseTexture.empty())
-            {
-                add("    diffuse texture: " + material.diffuseTexture);
-            }
-        }
-
-        return lines;
-    }
-}
-
-AssimpModelReport AssimpModelImporter::Inspect(const std::filesystem::path& path)
-{
-    AssimpModelReport report;
-    report.requestedPath = path;
-    report.resolvedPath = ResolvePath(path);
-
-    if (!Exists(report.resolvedPath))
-    {
-        report.error = "File does not exist.";
-        return report;
-    }
-
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(report.resolvedPath.string(), kImportFlags);
-    if (!scene)
-    {
-        report.error = importer.GetErrorString();
-        return report;
-    }
-
-    report.loaded = true;
-    report.nodeCount = CountNodes(scene->mRootNode);
-    report.meshCount = scene->mNumMeshes;
-    report.materialCount = scene->mNumMaterials;
-    report.textureCount = scene->mNumTextures;
-    CollectNamedNodeReports(scene->mRootNode, aiMatrix4x4(), report.namedNodes);
-
-    if ((scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0)
-    {
-        report.error = "Scene loaded but Assimp marked it incomplete.";
-    }
-    else if (!scene->HasMeshes())
-    {
-        report.error = "Scene loaded but contains no meshes.";
-    }
-
-    report.meshes.reserve(scene->mNumMeshes);
-    for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
-    {
-        const aiMesh* mesh = scene->mMeshes[i];
-        if (!mesh)
-        {
-            continue;
-        }
-
-        AssimpMeshReport meshReport;
-        meshReport.name = ToString(mesh->mName);
-        meshReport.vertexCount = mesh->mNumVertices;
-        meshReport.faceCount = mesh->mNumFaces;
-        meshReport.materialIndex = mesh->mMaterialIndex;
-        meshReport.hasNormals = mesh->HasNormals();
-        meshReport.hasTexCoords = mesh->HasTextureCoords(0);
-        meshReport.hasTangents = mesh->HasTangentsAndBitangents();
-        report.meshes.push_back(std::move(meshReport));
-    }
-
-    report.materials.reserve(scene->mNumMaterials);
-    for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
-    {
-        const aiMaterial* material = scene->mMaterials[i];
-
-        AssimpMaterialReport materialReport;
-        if (!material)
-        {
-            report.materials.push_back(std::move(materialReport));
-            continue;
-        }
-
-        aiString materialName;
-        if (material->Get(AI_MATKEY_NAME, materialName) == AI_SUCCESS)
-        {
-            materialReport.name = ToString(materialName);
-        }
-
-        aiColor4D baseColor;
-        if (aiGetMaterialColor(material, AI_MATKEY_BASE_COLOR, &baseColor) == AI_SUCCESS)
-        {
-            materialReport.baseColor = {
-                baseColor.r,
-                baseColor.g,
-                baseColor.b,
-                baseColor.a
-            };
-        }
-
-        aiString texturePath;
-        if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath) == AI_SUCCESS)
-        {
-            materialReport.baseColorTexture = ToString(texturePath);
-        }
-
-        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS)
-        {
-            materialReport.diffuseTexture = ToString(texturePath);
-        }
-
-        report.materials.push_back(std::move(materialReport));
-    }
-
-    return report;
 }
 
 bool AssimpModelImporter::LoadImportedModelData(
@@ -834,32 +583,6 @@ bool AssimpModelImporter::LoadImportedModelData(
             *outError = "No renderable geometry was imported.";
         }
         return false;
-    }
-
-    return true;
-}
-
-void AssimpModelImporter::DumpReport(const AssimpModelReport& report)
-{
-    for (const std::string& line : BuildReportLines(report))
-    {
-        TraceLine(line);
-    }
-}
-
-bool AssimpModelImporter::WriteReportFile(
-    const AssimpModelReport& report,
-    const std::filesystem::path& path)
-{
-    std::ofstream file(path, std::ios::out | std::ios::trunc);
-    if (!file.is_open())
-    {
-        return false;
-    }
-
-    for (const std::string& line : BuildReportLines(report))
-    {
-        file << line << '\n';
     }
 
     return true;

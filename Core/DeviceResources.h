@@ -1,12 +1,12 @@
-﻿//
-// DeviceResources.h - A wrapper for the Direct3D 11 device and swapchain
-//
-
+﻿//---------------------------------------------------------------------------
+//! @file   DeviceResources.h
+//! @brief  Direct3D 11 デバイスとスワップチェーンのラッパー
+//---------------------------------------------------------------------------
 #pragma once
 
 namespace DX
 {
-    // Provides an interface for an application that owns DeviceResources to be notified of the device being lost or created.
+    // DeviceResources の所有者がデバイスのロスト / 再作成の通知を受け取るためのインターフェース
     interface IDeviceNotify
     {
         virtual void OnDeviceLost() = 0;
@@ -16,7 +16,7 @@ namespace DX
         ~IDeviceNotify() = default;
     };
 
-    // Controls all the DirectX device resources.
+    // DirectX デバイスリソース全体を管理する
     class DeviceResources
     {
     public:
@@ -46,10 +46,10 @@ namespace DX
         void Present();
         void UpdateColorSpace();
 
-        // Device Accessors.
+        // デバイス情報アクセサ
         RECT GetOutputSize() const noexcept { return m_outputSize; }
 
-        // Direct3D Accessors.
+        // Direct3D アクセサ
         auto                    GetD3DDevice() const noexcept           { return m_d3dDevice.Get(); }
         auto                    GetD3DDeviceContext() const noexcept    { return m_d3dContext.Get(); }
         auto                    GetSwapChain() const noexcept           { return m_swapChain.Get(); }
@@ -67,7 +67,7 @@ namespace DX
         DXGI_COLOR_SPACE_TYPE   GetColorSpace() const noexcept          { return m_colorSpace; }
         unsigned int            GetDeviceOptions() const noexcept       { return m_options; }
 
-        // Performance events
+        // パフォーマンスイベント（PIX マーカー）
         void PIXBeginEvent(_In_z_ const wchar_t* name)
         {
             m_d3dAnnotation->BeginEvent(name);
@@ -87,38 +87,38 @@ namespace DX
         void CreateFactory();
         void GetHardwareAdapter(IDXGIAdapter1** ppAdapter);
 
-        // Direct3D objects.
+        // Direct3D オブジェクト
         com_ptr<IDXGIFactory2>               m_dxgiFactory;
         com_ptr<ID3D11Device1>               m_d3dDevice;
         com_ptr<ID3D11DeviceContext1>        m_d3dContext;
         com_ptr<IDXGISwapChain1>             m_swapChain;
         com_ptr<ID3DUserDefinedAnnotation>   m_d3dAnnotation;
 
-        // Direct3D rendering objects. Required for 3D.
+        // Direct3D 描画オブジェクト（3D 描画に必須）
         com_ptr<ID3D11Texture2D>             m_renderTarget;
         com_ptr<ID3D11Texture2D>             m_depthStencil;
         com_ptr<ID3D11RenderTargetView>      m_d3dRenderTargetView;
         com_ptr<ID3D11DepthStencilView>      m_d3dDepthStencilView;
         D3D11_VIEWPORT                       m_screenViewport;
 
-        // Direct3D properties.
+        // Direct3D プロパティ
         DXGI_FORMAT                          m_backBufferFormat;
         DXGI_FORMAT                          m_depthBufferFormat;
         UINT                                 m_backBufferCount;
         D3D_FEATURE_LEVEL                    m_d3dMinFeatureLevel;
 
-        // Cached device properties.
+        // キャッシュ済みデバイスプロパティ
         HWND                                 m_window;
         D3D_FEATURE_LEVEL                    m_d3dFeatureLevel;
         RECT                                 m_outputSize;
 
-        // HDR Support
+        // HDR 対応
         DXGI_COLOR_SPACE_TYPE                m_colorSpace;
 
-        // DeviceResources options (see flags above)
+        // DeviceResources オプション（上のフラグ参照）
         unsigned int                         m_options;
 
-        // The IDeviceNotify can be held directly as it owns the DeviceResources.
+        // IDeviceNotify は DeviceResources の所有者なので、生ポインタのまま保持してよい
         IDeviceNotify*                       m_deviceNotify;
     };
 }
