@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   WeaponModel.cpp
+//! @brief  一人称武器モデル (ビューモデル)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/Weapon/WeaponModel.h"
 #include "Render/Assets/ImportedModel.h"
 #include "Render/Assets/ImportedModelCache.h"
@@ -11,12 +15,16 @@ using namespace DirectX::SimpleMath;
 
 namespace
 {
+    //! 頂点群から求めた AABB中心と最長辺 (再センタリング・正規化の基準)
     struct ImportedModelBounds
     {
         Vector3 center = Vector3::Zero;
         float longestSide = 1.0f;
     };
 
+    //---------------------------------------------------------------------------
+    //! 全頂点を走査して AABB中心と最長辺を算出
+    //---------------------------------------------------------------------------
     ImportedModelBounds calculateImportedModelBounds(const ImportedModel& model)
     {
         const auto& vertices = model.data().vertices;
@@ -47,6 +55,10 @@ namespace
         return bounds;
     }
 
+    //---------------------------------------------------------------------------
+    //! ビューモデルのローカル行列を合成
+    //! 再センタリング -> 全長正規化 -> 前方補正回転 -> カメラローカル配置の順
+    //---------------------------------------------------------------------------
     Matrix createImportedRifleLocalMatrix(
         const Vector3& center,
         float longestSide,
@@ -68,6 +80,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! キャッシュから借用し、頂点群から AABB中心と最長辺を算出します
+//---------------------------------------------------------------------------
 bool WeaponModel::loadRifle(SceneContext& context, const std::string& path)
 {
     m_importedRifle = nullptr;
@@ -92,6 +107,9 @@ bool WeaponModel::loadRifle(SceneContext& context, const std::string& path)
     return true;
 }
 
+//---------------------------------------------------------------------------
+//! モーション適用済みルートに載せて ImportedModelCommand を積む
+//---------------------------------------------------------------------------
 void WeaponModel::submit(RenderCommandQueue& queue, const Matrix& rootWorld) const
 {
     if (m_importedRifle)
@@ -105,6 +123,9 @@ void WeaponModel::submit(RenderCommandQueue& queue, const Matrix& rootWorld) con
     }
 }
 
+//---------------------------------------------------------------------------
+//! ビューモデルのワールド行列を合成 (ローカル行列 x ルート)
+//---------------------------------------------------------------------------
 Matrix WeaponModel::buildModelWorldMatrix(const Matrix& rootWorld) const
 {
     if (!m_importedRifle)
@@ -118,19 +139,26 @@ Matrix WeaponModel::buildModelWorldMatrix(const Matrix& rootWorld) const
         m_rifleSettings) * rootWorld;
 }
 
+//---------------------------------------------------------------------------
+//! マズル位置 (モデル空間) を取得します
+//---------------------------------------------------------------------------
 Vector3 WeaponModel::getMuzzleLocalPosition() const
 {
     if (m_importedRifle)
     {
+        // VM_MuzzlePoint 空ノードのモデル空間位置
         if (const ImportedModelNode* muzzle = m_importedRifle->findNamedNode("VM_MuzzlePoint"))
         {
-            return muzzle->position;
+            return muzzle->modelPosition;
         }
     }
 
     return Vector3(0.0f, 0.0f, kFallbackMuzzleZ);
 }
 
+//---------------------------------------------------------------------------
+//! 借用参照を手放します (所有は ImportedModelCache のまま)
+//---------------------------------------------------------------------------
 void WeaponModel::finalize()
 {
     m_importedRifle = nullptr;
@@ -138,6 +166,9 @@ void WeaponModel::finalize()
     m_importedRifleLongestSide = 1.0f;
 }
 
+//---------------------------------------------------------------------------
+//! 配置設定を既定値へ戻します (DebugUI のリセットボタン用)
+//---------------------------------------------------------------------------
 void WeaponModel::resetRifleSettings()
 {
     m_rifleSettings = RifleModelSettings{};

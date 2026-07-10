@@ -85,8 +85,8 @@ void Boss::buildBoss()
         m_headLongestSide = std::max({ size.x, size.y, size.z, 0.001f });
 
         // 目の発光位置 (Blender で置いた Empty、モデル空間)
-        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_L")) { m_eyeLocalL = eye->position; }
-        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_R")) { m_eyeLocalR = eye->position; }
+        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_L")) { m_eyeLocalL = eye->modelPosition; }
+        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_R")) { m_eyeLocalR = eye->modelPosition; }
     }
 }
 

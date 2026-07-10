@@ -1,3 +1,7 @@
+//---------------------------------------------------------------------------
+//! @file   LayoutLoader.cpp
+//! @brief  レイアウト JSON 読み込み
+//---------------------------------------------------------------------------
 #include "pch.h"
 #include "Render/Assets/LayoutLoader.h"
 #include "Render/Assets/ImportedModelCache.h"
@@ -13,8 +17,12 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+//===========================================================================
+// ファイル内ヘルパ
+//===========================================================================
 namespace
 {
+    //! type 文字列の解決結果 (プリミティブ + スケール補正)
     struct PrimitiveBinding
     {
         GeometricPrimitive* primitive = nullptr;
@@ -153,6 +161,10 @@ namespace
             || type == "exit_gate";
     }
 
+    //-----------------------------------------------------------------------
+    //! type 文字列を MeshCache のプリミティブへ解決します
+    //! (直径1系のプリミティブは Maya の半径基準に合わせる 2倍補正を持つ)
+    //-----------------------------------------------------------------------
     PrimitiveBinding resolvePrimitive(SceneContext& context, const std::string& rawType)
     {
         PrimitiveBinding binding;
@@ -206,6 +218,9 @@ namespace
         return binding;
     }
 
+    //-----------------------------------------------------------------------
+    //! JSON から Transform を組み立てます (度 -> ラジアン、mirrorX で X 反転 + 回転補正)
+    //-----------------------------------------------------------------------
     Transform readTransform(
         const nlohmann::json& object,
         float scaleCorrection,
@@ -234,6 +249,9 @@ namespace
         return transform;
     }
 
+    //-----------------------------------------------------------------------
+    //! マーカーとして追加します (type 未指定なら名前の接頭辞から推定)
+    //-----------------------------------------------------------------------
     void appendMarker(
         const nlohmann::json& object,
         bool mirrorX,
@@ -265,6 +283,10 @@ namespace
         return std::filesystem::path(GetAssetPath(L"Textures/PBR")) / materialName;
     }
 
+    //-----------------------------------------------------------------------
+    //! objects/parts の1要素をパーツ or マーカーとして追加します
+    //! (プリミティブに解決できず、マーカー種別でもなければ黙って捨てる)
+    //-----------------------------------------------------------------------
     void appendPrimitiveObject(
         SceneContext& context,
         const nlohmann::json& object,
@@ -332,6 +354,10 @@ namespace
         outLayout.parts.push_back(std::move(part));
     }
 
+    //-----------------------------------------------------------------------
+    //! scale_space 指定から Maya スケール補正のデフォルトを決めます
+    //! ("maya" / "engine" / 未指定なら旧 parts 形式のときだけ有効)
+    //-----------------------------------------------------------------------
     bool defaultMayaScaleCorrectionFor(const nlohmann::json& data, bool legacyPartsFormat)
     {
         const std::string scaleSpace = toLower(readString(data, "scale_space"));
@@ -348,6 +374,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! レイアウト JSON を読み込みます
+//---------------------------------------------------------------------------
 bool LayoutLoader::loadLayout(
     SceneContext& context,
     const std::string& jsonPath,
@@ -382,6 +411,7 @@ bool LayoutLoader::loadLayout(
         return false;
     }
 
+    // 旧形式 (parts のみ) は mirror_x と Maya スケール補正がデフォルト有効
     const bool legacyPartsFormat = !hasObjects && hasParts;
     const bool mirrorX = readBool(data, "mirror_x", legacyPartsFormat);
     const bool applyMayaScaleCorrection = defaultMayaScaleCorrectionFor(data, legacyPartsFormat);
@@ -410,6 +440,9 @@ bool LayoutLoader::loadLayout(
     return true;
 }
 
+//---------------------------------------------------------------------------
+//! パーツ配列だけを取り出す簡易版
+//---------------------------------------------------------------------------
 bool LayoutLoader::loadPrimitiveLayout(
     SceneContext& context,
     const std::string& jsonPath,

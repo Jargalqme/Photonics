@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   BossScene.h
+//! @brief  ボス戦シーン
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "Scenes/Scene.h"
 
@@ -8,9 +12,9 @@
 #include "Gameplay/ICombatTarget.h"
 #include "Gameplay/CombatSystem.h"
 #include "Render/Visuals/Grid.h"
-#include "Render/Visuals/Skybox.h"
+#include "Render/Visuals/Cubemap.h"
 #include "Render/Lighting/IndirectLight.h"
-#include "Render/Visuals/ArenaFloor.h"
+#include "Render/Visuals/WaveEffect.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
 #include "Render/Lighting/SceneLighting.h"
@@ -28,6 +32,11 @@
 class PlayerCamera;
 class ImportedModel;
 
+//===========================================================================
+//! ボス戦シーン
+//! ゲームの本編。EventBus で VFX・SE・シェイクを配線し、
+//! 勝敗判定で Victory / GameOver へ遷移する
+//===========================================================================
 class BossScene : public Scene
 {
 public:
@@ -76,32 +85,32 @@ private:
     std::unique_ptr<Player> m_player;
     std::unique_ptr<Boss>   m_boss;
 
-    std::vector<ICombatTarget*> m_shotTargets;
-    BulletPool   m_bulletPool;
+    std::vector<ICombatTarget*> m_shotTargets;    //!< ヒットスキャン対象 (ボスのみ)
+    BulletPool   m_bulletPool;                    //!< 敵弾プール (Boss へ配線)
     CombatSystem m_combatSystem;
-    DirectX::GeometricPrimitive* m_bulletMesh = nullptr;  // MeshCache から借用（非所有）
+    DirectX::GeometricPrimitive* m_bulletMesh = nullptr;  //!< 弾の球メッシュ (MeshCache から借用・非所有)
 
     std::unique_ptr<ParticleSystem> m_particleSystem;
     std::unique_ptr<Tracers> m_tracers;
-    RenderCommandQueue m_renderQueue;
+    RenderCommandQueue m_renderQueue;             //!< パス毎に clear して使い回す
     SceneLighting m_lighting;
 
     std::unique_ptr<AudioManager> m_audioManager;
-    std::unique_ptr<BeatTracker> m_beatTracker;
+    std::unique_ptr<BeatTracker> m_beatTracker;   //!< 音楽のビート追跡 (グリッドパルス・UIフラッシュ)
 
     std::unique_ptr<Grid> m_grid;
-    std::unique_ptr<ArenaFloor> m_arenaFloor;
-    std::unique_ptr<Skybox> m_skybox;
-    std::unique_ptr<IndirectLight> m_indirectLight;
+    std::unique_ptr<WaveEffect> m_waveEffect;
+    std::unique_ptr<Cubemap> m_cubemap;
+    std::unique_ptr<IndirectLight> m_indirectLight;    //!< 環境キューブマップから焼く拡散IBL
 
     std::unique_ptr<GameUI> m_gameUI;
     std::unique_ptr<DebugUI> m_debugUI;
-    bool m_debugMode = false;
+    bool m_debugMode = false;                     //!< F3 でトグル (カーソル解放 + DebugUI 表示)
 
-    float m_hitstopTimer = 0.0f;
-
+    //! ビートコールバック (BeatTracker -> GameUI のフラッシュ)
     void onBeat(int beat);
 
+    // レンダーパス (render から呼ぶ順)
     void renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderViewmodel(const Matrix& view, const Vector3& camPos);

@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   Bloom.cpp
+//! @brief  ブルーム ポストエフェクト
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Pipeline/Bloom.h"
 #include "Render/Pipeline/RenderUtil.h"
 
@@ -9,8 +13,9 @@ Bloom::Bloom(DX::DeviceResources* deviceResources)
 {
 }
 
-// === デバイス依存リソース生成 ===
-
+//---------------------------------------------------------------------------
+//! デバイス依存リソースを作成します (シェーダー、定数バッファ、ステート)
+//---------------------------------------------------------------------------
 void Bloom::createDeviceDependentResources()
 {
     auto device = m_deviceResources->GetD3DDevice();
@@ -49,9 +54,10 @@ void Bloom::createDeviceDependentResources()
     DX::ThrowIfFailed(device->CreateBlendState(&blendDesc, m_additiveBlend.ReleaseAndGetAddressOf()));
 }
 
-// === ウィンドウサイズ依存リソース生成 ===
-
-void Bloom::createWindowSizeDependentResources(int width, int height)
+//---------------------------------------------------------------------------
+//! レンダーターゲットを作成します (ミップチェーン + 合成RT)
+//---------------------------------------------------------------------------
+void Bloom::createRenderTargets(int width, int height)
 {
     auto device = m_deviceResources->GetD3DDevice();
     m_targetWidth  = static_cast<UINT>(width);
@@ -106,8 +112,6 @@ void Bloom::createWindowSizeDependentResources(int width, int height)
         m_compositeSRV.ReleaseAndGetAddressOf()));
 }
 
-// === 終了処理 ===
-
 void Bloom::finalize()
 {
     m_fullscreenVS.Reset();
@@ -131,8 +135,9 @@ void Bloom::finalize()
     m_compositeSRV.Reset();
 }
 
-// === フルスクリーンパス（共通ヘルパー） ===
-
+//---------------------------------------------------------------------------
+//! フルスクリーン三角形を1枚描く共通パス
+//---------------------------------------------------------------------------
 void Bloom::renderFullscreenPass(ID3D11PixelShader* ps,
     ID3D11RenderTargetView* outputRTV,
     ID3D11ShaderResourceView* input0,
@@ -173,8 +178,9 @@ void Bloom::renderFullscreenPass(ID3D11PixelShader* ps,
     context->PSSetShaderResources(0, 2, nullSRVs);
 }
 
-// === ブルーム描画 ===
-
+//---------------------------------------------------------------------------
+//! ブルームを描画します (プリフィルタ -> ダウン -> アップ -> 合成)
+//---------------------------------------------------------------------------
 void Bloom::render(ID3D11ShaderResourceView* sceneSRV)
 {
     auto context = m_deviceResources->GetD3DDeviceContext();
@@ -197,7 +203,7 @@ void Bloom::render(ID3D11ShaderResourceView* sceneSRV)
     cb.sampleScale = m_upsampleScale;
     cb.bloomIntensity = m_intensity;
 
-    // --- パス1: プリフィルタ（シーン → mip[0]） ---
+    // プリフィルタ (シーン -> mip[0]、閾値以上の輝度だけ通す)
     cb.texelSize = XMFLOAT2(1.0f / sceneWidth, 1.0f / sceneHeight);
     RenderUtil::updateDynamicConstantBuffer(context, m_constantBuffer, cb);
 
@@ -205,7 +211,7 @@ void Bloom::render(ID3D11ShaderResourceView* sceneSRV)
         sceneSRV, nullptr,
         m_mipWidths[0], m_mipHeights[0]);
 
-    // --- パス2-5: ダウンサンプル（mip[i-1] → mip[i]） ---
+    // ダウンサンプル (mip[i-1] -> mip[i])
     for (int i = 1; i < MIP_COUNT; i++)
     {
         cb.texelSize = XMFLOAT2(1.0f / m_mipWidths[i - 1], 1.0f / m_mipHeights[i - 1]);
@@ -216,7 +222,7 @@ void Bloom::render(ID3D11ShaderResourceView* sceneSRV)
             m_mipWidths[i], m_mipHeights[i]);
     }
 
-    // --- パス6-9: アップサンプル（加算ブレンド） ---
+    // アップサンプル (mip[i+1] -> mip[i] へ加算ブレンドで足し込む)
     context->OMSetBlendState(m_additiveBlend.Get(), nullptr, 0xFFFFFFFF);
 
     for (int i = MIP_COUNT - 2; i >= 0; i--)
@@ -232,7 +238,7 @@ void Bloom::render(ID3D11ShaderResourceView* sceneSRV)
     // デフォルトブレンドステート復元
     context->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 
-    // --- パス10: 合成（シーン + ブルーム → 合成RT） ---
+    // 合成 (シーン + ブルーム -> 合成RT)
     cb.texelSize = XMFLOAT2(1.0f / m_mipWidths[0], 1.0f / m_mipHeights[0]);
     RenderUtil::updateDynamicConstantBuffer(context, m_constantBuffer, cb);
 

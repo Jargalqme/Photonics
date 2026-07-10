@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   ParticleSystem.cpp
+//! @brief  CPUパーティクル (加算合成ビルボード)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Render/Pipeline/RenderUtil.h"
 
@@ -10,6 +14,9 @@ ParticleSystem::ParticleSystem(DX::DeviceResources* deviceResources)
 {
 }
 
+//---------------------------------------------------------------------------
+//! バッファ・シェーダー・描画ステートを構築します
+//---------------------------------------------------------------------------
 void ParticleSystem::initialize()
 {
     auto device = m_deviceResources->GetD3DDevice();
@@ -68,6 +75,9 @@ void ParticleSystem::initialize()
     DX::ThrowIfFailed(device->CreateRasterizerState(&rsDesc, m_rasterizerState.ReleaseAndGetAddressOf()));
 }
 
+//---------------------------------------------------------------------------
+//! 発生リクエスト処理 -> 生存粒子の移動 -> GPUへ全量アップロード
+//---------------------------------------------------------------------------
 void ParticleSystem::update(float deltaTime)
 {
     m_totalTime += deltaTime;
@@ -134,6 +144,9 @@ void ParticleSystem::update(float deltaTime)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 全スロット分を1ドローで描画します (粒子6頂点 x MAX_PARTICLES)
+//---------------------------------------------------------------------------
 void ParticleSystem::render(
     const Matrix& view,
     const Matrix& projection)
@@ -171,6 +184,9 @@ void ParticleSystem::render(
     context->RSSetState(nullptr);
 }
 
+//---------------------------------------------------------------------------
+//! 発生リクエストを積みます
+//---------------------------------------------------------------------------
 void ParticleSystem::emit(
     const Vector3& position,
     const Vector4& color,

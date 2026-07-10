@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   TrainingScene.h
+//! @brief  トレーニングシーン (射撃練習場)
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "Scenes/Scene.h"
 
@@ -22,6 +26,11 @@
 
 class PlayerCamera;
 
+//===========================================================================
+//! トレーニングシーン
+//! ダミー相手の射撃練習場。ボス戦から敵弾・ボスを除いた構成
+//! (弾関連は一切持たない — 敵弾はボス戦専用機能)
+//===========================================================================
 class TrainingScene : public Scene
 {
 public:
@@ -58,22 +67,23 @@ private:
     std::unique_ptr<Player> m_player;
 
     std::unique_ptr<Dummy> m_dummy;
-    std::vector<ICombatTarget*> m_shotTargets;
+    std::vector<ICombatTarget*> m_shotTargets;    //!< ヒットスキャン対象 (ダミーのみ)
     CombatSystem m_combatSystem;
 
     std::unique_ptr<ParticleSystem> m_particleSystem;
     std::unique_ptr<Tracers> m_tracers;
-    RenderCommandQueue m_renderQueue;
+    RenderCommandQueue m_renderQueue;             //!< パス毎に clear して使い回す
     SceneLighting m_lighting;
     std::unique_ptr<AudioManager> m_audioManager;
 
     std::unique_ptr<Grid> m_grid;
-    PrimitiveLayout m_environmentLayout;
+    PrimitiveLayout m_environmentLayout;          //!< JSON レイアウトから読む静的環境
 
     std::unique_ptr<GameUI> m_gameUI;
     std::unique_ptr<DebugUI> m_debugUI;
-    bool m_debugMode = false;
+    bool m_debugMode = false;                     //!< F3 でトグル (カーソル解放 + DebugUI 表示)
 
+    // レンダーパス (render から呼ぶ順)
     void renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos);
     void renderViewmodel(const Matrix& view, const Vector3& camPos);

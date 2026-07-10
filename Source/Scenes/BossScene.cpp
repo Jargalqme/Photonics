@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   BossScene.cpp
+//! @brief  ボス戦シーン
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Scenes/BossScene.h"
 #include "Gameplay/PlayerCamera.h"
 #include "DeviceResources.h"
@@ -18,6 +22,9 @@ namespace
     constexpr float RIFLE_FIRE_VOLUME = 0.35f;
     constexpr float RIFLE_FIRE_PITCH_JITTER = 0.015f;
 
+    //---------------------------------------------------------------------------
+    //! 発射音グループをロード (バリエーション不在時は単発SEへフォールバック)
+    //---------------------------------------------------------------------------
     void loadRifleFireAudio(AudioManager& audio)
     {
         if (audio.loadSoundGroupFromDirectory(
@@ -36,6 +43,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 BossScene::BossScene(SceneManager* sceneManager)
     : Scene("BossScene")
     , m_sceneManager(sceneManager)
@@ -46,8 +56,13 @@ BossScene::~BossScene()
 {
 }
 
-// === 初期化 ===
+//===========================================================================
+// 初期化
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 全サブシステムを構築します (ライティング -> カメラ -> プレイヤー -> VFX -> 敵 -> オーディオ -> ワールド -> UI)
+//---------------------------------------------------------------------------
 void BossScene::initialize(SceneContext& context)
 {
     Scene::initialize(context);
@@ -103,21 +118,21 @@ void BossScene::initialize(SceneContext& context)
     m_grid = std::make_unique<Grid>(*m_context);
     m_grid->initialize();
 
-    m_arenaFloor = std::make_unique<ArenaFloor>(*m_context);
-    m_arenaFloor->initialize();
+    m_waveEffect = std::make_unique<WaveEffect>(*m_context);
+    m_waveEffect->initialize();
 
-    m_arenaFloor->setBrightness(1.0f);
-    m_arenaFloor->setAlpha(1.0f);
-    m_arenaFloor->setTransform(
+    m_waveEffect->setBrightness(1.0f);
+    m_waveEffect->setAlpha(1.0f);
+    m_waveEffect->setTransform(
         Vector3(0.0f, 0.0f, 420.0f),
         Vector3::Zero,
         Vector3::One);
 
-    m_skybox = std::make_unique<Skybox>(m_deviceResources);
-    m_skybox->initialize();
+    m_cubemap = std::make_unique<Cubemap>(m_deviceResources);
+    m_cubemap->initialize();
 
     m_indirectLight = std::make_unique<IndirectLight>(m_deviceResources);
-    m_indirectLight->initialize(m_skybox->cubeSRV(), m_context->commonStates->LinearClamp());
+    m_indirectLight->initialize(m_cubemap->cubeSRV(), m_context->commonStates->LinearClamp());
 
     // UI
     m_gameUI = std::make_unique<GameUI>();
@@ -130,7 +145,7 @@ void BossScene::initialize(SceneContext& context)
     m_debugUI->setCamera(m_camera.get());
     m_debugUI->setLightCycle(m_player.get());
     m_debugUI->setGrid(m_grid.get());
-    m_debugUI->setSkybox(m_skybox.get());
+    m_debugUI->setCubemap(m_cubemap.get());
     m_debugUI->setAudioManager(m_audioManager.get());
     m_debugUI->setBeatTracker(m_beatTracker.get());
     m_debugUI->setBulletPool(&m_bulletPool);
@@ -140,8 +155,14 @@ void BossScene::initialize(SceneContext& context)
     m_debugUI->setSceneLighting(&m_lighting);
 }
 
-// === シーン遷移 ===
+//===========================================================================
+// シーン遷移
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! イベント購読の再登録 + ゲーム状態リセット + ボス起動
+//! EventBus は exit で clear されるため、購読はここで毎回登録し直す
+//---------------------------------------------------------------------------
 void BossScene::enter()
 {
     Scene::enter();
@@ -225,6 +246,9 @@ void BossScene::enter()
     m_renderer->GetSceneRenderer()->setActiveCamera(m_camera.get());
 }
 
+//---------------------------------------------------------------------------
+//! 購読解除 + 音楽停止 + カメラ・ブルームを返却
+//---------------------------------------------------------------------------
 void BossScene::exit()
 {
     Scene::exit();
@@ -238,12 +262,15 @@ void BossScene::exit()
     }
 }
 
+//---------------------------------------------------------------------------
+//! GPU リソース解放 -> 借用ポインタ返却 -> オブジェクト破棄
+//---------------------------------------------------------------------------
 void BossScene::finalize()
 {
     // GPU リソース解放
     if (m_grid)           { m_grid->finalize(); }
-    if (m_arenaFloor)     { m_arenaFloor->finalize(); }
-    if (m_skybox)         { m_skybox->finalize(); }
+    if (m_waveEffect)     { m_waveEffect->finalize(); }
+    if (m_cubemap)         { m_cubemap->finalize(); }
     if (m_indirectLight)  { m_indirectLight->finalize(); }
     if (m_player)         { m_player->finalize(); }
     if (m_boss)           { m_boss->finalize(); }
@@ -261,16 +288,21 @@ void BossScene::finalize()
     m_player.reset();
     m_boss.reset();
     m_grid.reset();
-    m_arenaFloor.reset();
-    m_skybox.reset();
+    m_waveEffect.reset();
+    m_cubemap.reset();
     m_indirectLight.reset();
     m_beatTracker.reset();
     m_audioManager.reset();
     m_debugUI.reset();
 }
 
-// === 更新 ===
+//===========================================================================
+// 更新
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 入力 -> ゲームプレイ系統 -> イベント配信 -> 勝敗遷移 -> カメラ -> サブシステム
+//---------------------------------------------------------------------------
 void BossScene::update(float deltaTime, InputManager* input)
 {
     // === 入力 ===
@@ -343,18 +375,24 @@ void BossScene::update(float deltaTime, InputManager* input)
     m_beatTracker->update(deltaTime);
     m_grid->setBeatPulse(m_beatTracker->getBeatProgress());
     m_grid->update();
-    m_arenaFloor->update(deltaTime);
+    m_waveEffect->update(deltaTime);
 }
 
-// === ヘルパー ===
-
+//---------------------------------------------------------------------------
+//! ビートコールバック (BeatTracker -> GameUI のフラッシュ)
+//---------------------------------------------------------------------------
 void BossScene::onBeat(int beat)
 {
     m_gameUI->triggerBeatFlash(beat);
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 拡散IBLを渡してからレンダーパスを順に実行します
+//---------------------------------------------------------------------------
 void BossScene::render()
 {
     const auto view   = m_camera->matView();
@@ -369,12 +407,17 @@ void BossScene::render()
     renderUI(view, proj);                 // GameUI + デバッグ
 }
 
-// === レンダーパス ===
+//===========================================================================
+// レンダーパス
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! キューブマップ背景 + 波エフェクト + グリッド + ボス
+//---------------------------------------------------------------------------
 void BossScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
-    m_skybox->render();
-    m_arenaFloor->render(view, proj);
+    m_cubemap->render();
+    m_waveEffect->render(view, proj);
     m_grid->render(view, proj);
 
     m_renderQueue.clear();
@@ -382,6 +425,9 @@ void BossScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, proj, camPos, m_lighting);
 }
 
+//---------------------------------------------------------------------------
+//! 弾・パーティクル・トレーサー
+//---------------------------------------------------------------------------
 void BossScene::renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
     m_renderQueue.clear();
@@ -392,6 +438,9 @@ void BossScene::renderEffects(const Matrix& view, const Matrix& proj, const Vect
     m_tracers->render(view, proj, camPos);
 }
 
+//---------------------------------------------------------------------------
+//! 武器ビューモデル (深度クリアで常に最前面)
+//---------------------------------------------------------------------------
 void BossScene::renderViewmodel(const Matrix& view, const Vector3& camPos)
 {
     m_renderer->BeginViewmodelPass();   // 深度クリアして常に最前面に描画
@@ -401,6 +450,9 @@ void BossScene::renderViewmodel(const Matrix& view, const Vector3& camPos)
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, m_camera->matViewmodelProj(), camPos, m_lighting);
 }
 
+//---------------------------------------------------------------------------
+//! GameUI + デバッグ (F3 中のみ)
+//---------------------------------------------------------------------------
 void BossScene::renderUI(const Matrix& view, const Matrix& proj)
 {
     m_gameUI->render(view, proj);

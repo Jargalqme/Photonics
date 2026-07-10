@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   MeshCache.cpp
+//! @brief  GeometricPrimitive 共有キャッシュ
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Assets/MeshCache.h"
 
 using namespace DirectX;
@@ -14,7 +18,9 @@ void MeshCache::finalize()
 	m_context = nullptr;
 }
 
-// === 単位形状 ===
+//===========================================================================
+// 単位形状
+//===========================================================================
 
 GeometricPrimitive* MeshCache::getCube()
 {
@@ -77,20 +83,25 @@ GeometricPrimitive* MeshCache::getSphere(int tessellation)
 	return slot.get();
 }
 
-// === 比率固定 ===
+//===========================================================================
+// 比率固定
+//===========================================================================
 
-// 注意：浮動小数のキーは呼び出し側がリテラルを渡す前提（実行時計算した値を使う場合は要再設計）
-GeometricPrimitive* MeshCache::getTorus(float majorRadius, float minorRadius, int tessellation)
+//---------------------------------------------------------------------------
+//! トーラスを取得します
+//! 注意: 浮動小数のキーは呼び出し側がリテラルを渡す前提 (実行時計算した値を使う場合は要再設計)
+//---------------------------------------------------------------------------
+GeometricPrimitive* MeshCache::getTorus(float diameter, float thickness, int tessellation)
 {
 	const std::string key = "Torus_"
-		+ std::to_string(majorRadius) + "_"
-		+ std::to_string(minorRadius) + "_"
+		+ std::to_string(diameter) + "_"
+		+ std::to_string(thickness) + "_"
 		+ std::to_string(tessellation);
 
 	auto& slot = m_meshes[key];
 	if (!slot)
 	{
-		slot = GeometricPrimitive::CreateTorus(m_context, majorRadius, minorRadius, tessellation, false);
+		slot = GeometricPrimitive::CreateTorus(m_context, diameter, thickness, tessellation, false);
 	}
 	return slot.get();
 }

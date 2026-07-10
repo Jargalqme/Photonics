@@ -3,8 +3,8 @@
 //! @brief  Bloom threshold + 13-tap downsample (scene to mip[0])
 //---------------------------------------------------------------------------
 
-#include "Common.hlsli"
-#include "Sampling.hlsli"
+#include "Includes/Common.hlsli"
+#include "Includes/Sampling.hlsli"
 
 cbuffer BloomParams : register(b0)
 {

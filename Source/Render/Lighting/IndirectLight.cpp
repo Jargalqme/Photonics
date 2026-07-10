@@ -1,12 +1,22 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   IndirectLight.cpp
+//! @brief  拡散IBL (放射照度キューブの実行時ベイク)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Lighting/IndirectLight.h"
 #include "Render/Pipeline/RenderUtil.h"
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 IndirectLight::IndirectLight(DX::DeviceResources* deviceResources)
 	: m_deviceResources(deviceResources)
 {
 }
 
+//---------------------------------------------------------------------------
+//! リソース作成 + ベイクを1回実行します
+//---------------------------------------------------------------------------
 void IndirectLight::initialize(ID3D11ShaderResourceView* environmentCubeSRV, ID3D11SamplerState* linearClampSampler)
 {
 	createIrradianceResources();
@@ -20,6 +30,9 @@ void IndirectLight::finalize()
 	m_irradianceSRV.Reset();
 }
 
+//---------------------------------------------------------------------------
+//! 放射照度キューブと SRV/UAV を作成します
+//---------------------------------------------------------------------------
 void IndirectLight::createIrradianceResources()
 {
 	auto* device = m_deviceResources->GetD3DDevice();
@@ -46,6 +59,7 @@ void IndirectLight::createIrradianceResources()
 	DX::ThrowIfFailed(device->CreateShaderResourceView(
 		cubeTexture.Get(), &srvDesc, m_irradianceSRV.ReleaseAndGetAddressOf()));
 
+	// D3D11 にキューブマップ UAV は無い -> 6要素の TEXTURE2DARRAY として書く
 	D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
 	uavDesc.Format = texDesc.Format;
 	uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
@@ -56,6 +70,9 @@ void IndirectLight::createIrradianceResources()
 		cubeTexture.Get(), &uavDesc, m_irradianceUAV.ReleaseAndGetAddressOf()));
 }
 
+//---------------------------------------------------------------------------
+//! コンピュートシェーダーを1回ディスパッチしてベイクします
+//---------------------------------------------------------------------------
 void IndirectLight::bakeIrradiance(ID3D11ShaderResourceView* environmentCubeSRV, ID3D11SamplerState* linearClampSampler)
 {
 	auto* device   = m_deviceResources->GetD3DDevice();
@@ -68,8 +85,10 @@ void IndirectLight::bakeIrradiance(ID3D11ShaderResourceView* environmentCubeSRV,
 	context->CSSetSamplers(0, 1, &linearClampSampler);
 	context->CSSetUnorderedAccessViews(0, 1, m_irradianceUAV.GetAddressOf(), nullptr);
 
+	// 1グループ = 1面 (32x32 スレッド)、Z の6つで全面
 	context->Dispatch(1, 1, 6);
 
+	// UAV/SRV を外す (以降のパスで同テクスチャを SRV として読むため)
 	ID3D11UnorderedAccessView* nullUAV = nullptr;
 	ID3D11ShaderResourceView*  nullSRV = nullptr;
 	ID3D11SamplerState*        nullSmp = nullptr;

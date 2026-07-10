@@ -21,10 +21,10 @@ void SceneRenderer::createDeviceDependentResources()
     m_finalComposite->createDeviceDependentResources();
 }
 
-void SceneRenderer::createWindowSizeDependentResources(int width, int height)
+void SceneRenderer::createRenderTargets(int width, int height)
 {
-    m_bloom->createWindowSizeDependentResources(width, height);
-    // FinalCompositePass has no window-size-dependent resources.
+    m_bloom->createRenderTargets(width, height);
+    // FinalCompositePass has no resolution-dependent resources.
 }
 
 void SceneRenderer::onDeviceLost()

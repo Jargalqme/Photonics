@@ -1,7 +1,16 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   ParticleSystem.h
+//! @brief  CPUパーティクル (加算合成ビルボード)
+//---------------------------------------------------------------------------
+#pragma once
 #include "DeviceResources.h"
 #include <vector>
 
+//===========================================================================
+//! CPUパーティクル
+//! CPU で全粒子を更新し、構造化バッファへ毎フレーム全量アップロード。
+//! VS が SV_VertexID から粒子を引いてビルボード展開する (頂点バッファ無し)
+//===========================================================================
 class ParticleSystem
 {
 public:
@@ -9,11 +18,15 @@ public:
     ~ParticleSystem() = default;
 
     void initialize();
+
+    //! 発生リクエスト処理 -> 生存粒子の移動 -> GPUへアップロード
     void update(float deltaTime);
+
     void render(const DirectX::SimpleMath::Matrix& view,
                 const DirectX::SimpleMath::Matrix& projection);
     void finalize();
 
+    //! 発生リクエストを積みます (実際の発生は次の update)
     void emit(const DirectX::SimpleMath::Vector3& position,
               const DirectX::SimpleMath::Vector4& color,
               uint32_t count,
@@ -24,12 +37,12 @@ public:
 private:
     // --- 定数 ---
     static constexpr uint32_t MAX_PARTICLES = 4096;
-    static constexpr float GRAVITY          = 2.0f;
-    static constexpr float UPWARD_BIAS      = 0.5f;
-    static constexpr float BASE_SIZE        = 0.15f;
-    static constexpr float SIZE_VARIANCE    = 0.1f;
+    static constexpr float GRAVITY          = 2.0f;     //!< 重力加速度
+    static constexpr float UPWARD_BIAS      = 0.5f;     //!< 発生方向の上向きバイアス
+    static constexpr float BASE_SIZE        = 0.15f;    //!< 粒子の基本サイズ
+    static constexpr float SIZE_VARIANCE    = 0.1f;     //!< サイズの揺らぎ幅
 
-    // HLSL Particle 構造体と一致（64バイト）
+    //! HLSL Particle 構造体と一致（64バイト）
     struct Particle
     {
         DirectX::SimpleMath::Vector3 position = {};
@@ -41,14 +54,14 @@ private:
         float pad[3] = {};
     };
 
-    // HLSL 定数バッファと一致
+    //! HLSL 定数バッファと一致
     struct ParticleCB
     {
         DirectX::SimpleMath::Matrix inverseView;
         DirectX::SimpleMath::Matrix viewProjection;
     };
 
-    // 発生リクエスト（キュー化、update() で処理）
+    //! 発生リクエスト（キュー化、update() で処理）
     struct EmitRequest
     {
         DirectX::SimpleMath::Vector3 position;

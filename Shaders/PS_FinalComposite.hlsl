@@ -5,7 +5,7 @@
 //          Applies exposure, ACES tonemap (Hill fit), and gamma encoding.
 //---------------------------------------------------------------------------
 
-#include "Tonemapping.hlsli"
+#include "Includes/Tonemapping.hlsli"
 
 cbuffer FinalCompositeParams : register(b0)
 {

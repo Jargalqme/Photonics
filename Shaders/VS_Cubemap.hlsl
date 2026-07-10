@@ -1,8 +1,8 @@
 //---------------------------------------------------------------------------
-//! @file   VS_Skybox.hlsl
+//! @file   VS_Cubemap.hlsl
 //! @brief  Fullscreen triangle at depth=1 with world direction from inverse VP
 //---------------------------------------------------------------------------
-#include "Camera.hlsli"
+#include "Includes/Camera.hlsli"
 
 struct VS_OUTPUT
 {

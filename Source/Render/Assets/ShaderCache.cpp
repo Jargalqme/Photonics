@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   ShaderCache.cpp
+//! @brief  コンパイル済みシェーダーのキャッシュ
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Assets/ShaderCache.h"
 #include "Render/Pipeline/RenderUtil.h"
 
@@ -16,7 +20,9 @@ void ShaderCache::finalize()
 	m_device = nullptr;
 }
 
-// === VS ===
+//===========================================================================
+// VS
+//===========================================================================
 
 ID3D11VertexShader* ShaderCache::getVS(const std::wstring& filename)
 {
@@ -37,7 +43,9 @@ ID3DBlob* ShaderCache::getVSBlob(const std::wstring& filename)
 	return m_vs[filename].blob.Get();
 }
 
-// === PS ===
+//===========================================================================
+// PS
+//===========================================================================
 
 ID3D11PixelShader* ShaderCache::getPS(const std::wstring& filename)
 {

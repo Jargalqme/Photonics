@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   WeaponMotion.cpp
+//! @brief  武器の手続きモーション (ADS・リコイル・ボブ・スウェイ)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "WeaponMotion.h"
 
 namespace
@@ -19,6 +23,9 @@ namespace
 	}
 }
 
+//---------------------------------------------------------------------------
+//! 基本姿勢 + リコイル + ボブ + スウェイ を加算合成
+//---------------------------------------------------------------------------
 void WeaponMotion::update(const WeaponMotionInput& input)
 {
 	const float deltaTime = std::max(input.deltaTime, 0.0f);
@@ -32,12 +39,18 @@ void WeaponMotion::update(const WeaponMotionInput& input)
 	m_composed.rotation = base.rotation + recoil.rotation + bob.rotation + sway.rotation;
 }
 
+//---------------------------------------------------------------------------
+//! リコイルバネへキック (Z後退 + ピッチ跳ね上げ)
+//---------------------------------------------------------------------------
 void WeaponMotion::onFire()
 {
 	m_recoilZ.kick(m_tuning.recoilKickback);
 	m_recoilP.kick(m_tuning.recoilPitchDeg);
 }
 
+//---------------------------------------------------------------------------
+//! 全状態を初期姿勢へ戻します
+//---------------------------------------------------------------------------
 void WeaponMotion::reset()
 {
 	m_recoilZ.reset();
@@ -50,6 +63,9 @@ void WeaponMotion::reset()
 	m_composed     = {};
 }
 
+//---------------------------------------------------------------------------
+//! 腰だめ <-> ADS 位置のブレンド
+//---------------------------------------------------------------------------
 WeaponMotionOutput WeaponMotion::computeBasePose(float deltaTime, bool isAiming)
 {
 	const float target = isAiming ? 1.0f : 0.0f;
@@ -61,6 +77,9 @@ WeaponMotionOutput WeaponMotion::computeBasePose(float deltaTime, bool isAiming)
 	return output;
 }
 
+//---------------------------------------------------------------------------
+//! リコイルバネを 0 へ向けて減衰更新 (Z後退 + ピッチ)
+//---------------------------------------------------------------------------
 WeaponMotionOutput WeaponMotion::computeRecoil(float deltaTime)
 {
 	m_recoilZ.update(0.0f, deltaTime);
@@ -68,9 +87,12 @@ WeaponMotionOutput WeaponMotion::computeRecoil(float deltaTime)
 	return { Vector3(0.0f, 0.0f, m_recoilZ.x), Vector3(m_recoilP.x, 0.0f, 0.0f) };
 }
 
+//---------------------------------------------------------------------------
+//! 歩行ボブ (X = sin, Y = 2倍周波数の cos -> 8の字軌道)
+//---------------------------------------------------------------------------
 WeaponMotionOutput WeaponMotion::computeBob(const WeaponMotionInput& input)
 {
-	constexpr float kMaxSpeed = 15.0f;
+	constexpr float kMaxSpeed = 15.0f;    // ボブが最大になる移動速度
 	float speedN = std::clamp(input.moveSpeed / kMaxSpeed, 0.0f, 1.0f);
 	float target = (input.grounded && speedN > 0.05f) ? speedN : 0.0f;
 
@@ -84,6 +106,9 @@ WeaponMotionOutput WeaponMotion::computeBob(const WeaponMotionInput& input)
 	return { Vector3(x, y, 0.0f), Vector3::Zero };
 }
 
+//---------------------------------------------------------------------------
+//! 視点差分の逆方向へドリフトし、復帰速度で追いつく (遅れて付いてくる演出)
+//---------------------------------------------------------------------------
 WeaponMotionOutput WeaponMotion::computeSway(const WeaponMotionInput& input)
 {
 	float dt = std::max(input.deltaTime, 0.0f);

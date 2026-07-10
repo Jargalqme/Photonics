@@ -3,7 +3,7 @@
 //! @brief  Anti-aliased procedural grid lines (Ben Golus pristine grid)
 //---------------------------------------------------------------------------
 
-#include "Camera.hlsli"
+#include "Includes/Camera.hlsli"
 
 cbuffer GridConstants : register(b0)
 {

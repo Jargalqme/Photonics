@@ -1,10 +1,14 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   DebugUI.cpp
+//! @brief  デバッグパネル (ImGui)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "UI/DebugUI.h"
 #include "Gameplay/PlayerCamera.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
 #include "Render/Visuals/Grid.h"
-#include "Render/Visuals/Skybox.h"
+#include "Render/Visuals/Cubemap.h"
 #include "Services/AudioManager.h"
 #include "Services/BeatTracker.h"
 #include "Gameplay/BulletPool.h"
@@ -19,6 +23,9 @@
 
 namespace
 {
+    // --- ウィンドウスタイルとプロパティグリッドのヘルパ ---
+
+    // Push の個数と必ず一致させること (Pop はこの数で一括)
     constexpr int DEBUG_STYLE_VAR_COUNT = 7;
     constexpr int DEBUG_STYLE_COLOR_COUNT = 24;
 
@@ -77,6 +84,7 @@ namespace
         ImGui::PopStyleVar(DEBUG_STYLE_VAR_COUNT);
     }
 
+    //! 2列 (ラベル | 値) のプロパティグリッドを開始 (true なら EndTable を呼ぶこと)
     bool BeginPropertyGrid(const char* id)
     {
         const ImGuiTableFlags flags =
@@ -218,6 +226,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! デバッグウィンドウを開きます
+//---------------------------------------------------------------------------
 bool DebugUI::beginDebugWindow()
 {
     ImGui::SetNextWindowPos(ImVec2(24.0f, 24.0f), ImGuiCond_FirstUseEver);
@@ -231,6 +242,9 @@ void DebugUI::endDebugWindow()
     ImGui::End();
 }
 
+//---------------------------------------------------------------------------
+//! パネル一式を描画します
+//---------------------------------------------------------------------------
 void DebugUI::render()
 {
     PushDebugWindowStyle();
@@ -252,6 +266,9 @@ void DebugUI::render()
     drawCompositionOverlay();
 }
 
+//---------------------------------------------------------------------------
+//! ステータスヘッダー (FPS / フレーム時間 / ビルド / カーソル状態)
+//---------------------------------------------------------------------------
 void DebugUI::drawHeader()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -302,6 +319,9 @@ void DebugUI::drawHeader()
     ImGui::Separator();
 }
 
+//---------------------------------------------------------------------------
+//! カメラパネル (FOV・マウス感度・構図オーバーレイ)
+//---------------------------------------------------------------------------
 void DebugUI::drawCameraPanel()
 {
     if (!DrawPanelHeader("Camera"))
@@ -335,6 +355,9 @@ void DebugUI::drawCameraPanel()
     }
 }
 
+//---------------------------------------------------------------------------
+//! 武器パネル (WeaponMotionTuning へスライダ直結)
+//---------------------------------------------------------------------------
 void DebugUI::drawWeaponPanel()
 {
     if (!DrawPanelHeader("Weapon"))
@@ -393,6 +416,9 @@ void DebugUI::drawWeaponPanel()
     }
 }
 
+//---------------------------------------------------------------------------
+//! レンダリングパネル (露出・キーライト・グリッド・ブルーム)
+//---------------------------------------------------------------------------
 void DebugUI::drawRenderingPanel()
 {
     if (!DrawPanelHeader("Rendering"))
@@ -475,6 +501,9 @@ void DebugUI::drawRenderingPanel()
     }
 }
 
+//---------------------------------------------------------------------------
+//! 戦闘パネル (弾プール使用率・ボス状態)
+//---------------------------------------------------------------------------
 void DebugUI::drawCombatPanel()
 {
     if (!DrawPanelHeader("Combat"))
@@ -530,6 +559,9 @@ void DebugUI::drawCombatPanel()
     }
 }
 
+//---------------------------------------------------------------------------
+//! オーディオパネル (マスター音量・ビート状態)
+//---------------------------------------------------------------------------
 void DebugUI::drawAudioPanel()
 {
     if (!DrawPanelHeader("Audio", false))
@@ -570,6 +602,9 @@ void DebugUI::drawAudioPanel()
     }
 }
 
+//---------------------------------------------------------------------------
+//! 三分割構図オーバーレイ (ウィンドウ外・画面全体に直描き)
+//---------------------------------------------------------------------------
 void DebugUI::drawCompositionOverlay()
 {
     if (!m_showThirds)

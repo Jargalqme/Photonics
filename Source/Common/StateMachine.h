@@ -1,7 +1,12 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   StateMachine.h
+//! @brief  汎用ステートマシン (コールバック登録式)
+//---------------------------------------------------------------------------
+#pragma once
 #include <functional>
 #include <unordered_map>
 
+//! 1ステート分のコールバック束 (未設定の関数はスキップされる)
 struct StateCallbacks
 {
     std::function<void()> enter;
@@ -9,6 +14,10 @@ struct StateCallbacks
     std::function<void()> exit;
 };
 
+//===========================================================================
+//! 汎用ステートマシン
+//! enum 等をキーに enter/update/exit を登録し、changeState が呼び分ける
+//===========================================================================
 template <typename T>
 class StateMachine
 {
@@ -21,6 +30,7 @@ public:
         m_states[state] = { enterFn, updateFn, exitFn };
     }
 
+    //! 現ステートの exit -> 新ステートの enter (初回は enter のみ)
     void changeState(T newState)
     {
         if (m_hasState && m_states[m_currentState].exit)
@@ -51,5 +61,5 @@ public:
 private:
     std::unordered_map<T, StateCallbacks> m_states;
     T m_currentState{};
-    bool m_hasState = false;
+    bool m_hasState = false;    //!< changeState が一度でも呼ばれたか
 };

@@ -3,8 +3,8 @@
 //! @brief  13-tap box downsample (mip[i-1] to mip[i])
 //---------------------------------------------------------------------------
 
-#include "Common.hlsli"
-#include "Sampling.hlsli"
+#include "Includes/Common.hlsli"
+#include "Includes/Sampling.hlsli"
 
 cbuffer BloomParams : register(b0)
 {

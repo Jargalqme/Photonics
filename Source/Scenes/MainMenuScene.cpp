@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   MainMenuScene.cpp
+//! @brief  メインメニューシーン
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Scenes/MainMenuScene.h"
 #include "Scenes/SceneManager.h"
 #include "Services/InputManager.h"
@@ -14,6 +18,8 @@
 
 namespace
 {
+    // --- renderTuningPanel 用のデバッグ出力ヘルパ ---
+
     void TraceLine(const std::string& text)
     {
         OutputDebugStringA(text.c_str());
@@ -27,6 +33,9 @@ namespace
             + std::to_string(value.z);
     }
 
+    //---------------------------------------------------------------------------
+    //! 回転角 (度) からカメラの前方・上ベクトルを構築
+    //---------------------------------------------------------------------------
     void BuildCameraBasis(
         const Vector3& rotationDegrees,
         Vector3& outForward,
@@ -125,6 +134,9 @@ namespace
 
 }
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 MainMenuScene::MainMenuScene(SceneManager* sceneManager)
     : Scene("MainMenu")
     , m_sceneManager(sceneManager)
@@ -136,6 +148,13 @@ MainMenuScene::~MainMenuScene()
 {
 }
 
+//===========================================================================
+// シーンライフサイクル
+//===========================================================================
+
+//---------------------------------------------------------------------------
+//! グリッド背景とメニュー音楽を構築します
+//---------------------------------------------------------------------------
 void MainMenuScene::initialize(SceneContext& context)
 {
     Scene::initialize(context);
@@ -150,6 +169,9 @@ void MainMenuScene::initialize(SceneContext& context)
     m_audioManager->loadMusic("menu", GetAssetPath(L"Audio/menu_music.wav").c_str());
 }
 
+//---------------------------------------------------------------------------
+//! カーソル表示・音楽再生・ブルーム有効化
+//---------------------------------------------------------------------------
 void MainMenuScene::enter()
 {
     Scene::enter();
@@ -172,6 +194,9 @@ void MainMenuScene::enter()
     }
 }
 
+//---------------------------------------------------------------------------
+//! 音楽停止・ブルーム無効化
+//---------------------------------------------------------------------------
 void MainMenuScene::exit()
 {
     Scene::exit();
@@ -198,6 +223,13 @@ void MainMenuScene::finalize()
 
 }
 
+//===========================================================================
+// 更新
+//===========================================================================
+
+//---------------------------------------------------------------------------
+//! 現在のページ (Root / Settings) へ入力を配ります
+//---------------------------------------------------------------------------
 void MainMenuScene::update(float deltaTime, InputManager* input)
 {
     (void)deltaTime;
@@ -222,6 +254,9 @@ void MainMenuScene::update(float deltaTime, InputManager* input)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 項目一覧の操作 (キー上下 + Enter / マウスホバー + クリック / Esc = 終了)
+//---------------------------------------------------------------------------
 void MainMenuScene::updateRoot(InputManager* input)
 {
     if (input->isKeyPressed(Keyboard::Keys::Up) || input->isKeyPressed(Keyboard::Keys::W))
@@ -262,6 +297,9 @@ void MainMenuScene::updateRoot(InputManager* input)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 選択項目を実行します (開始 / 訓練 / 終了)
+//---------------------------------------------------------------------------
 void MainMenuScene::activateRootItem(int index)
 {
     switch (index)
@@ -281,6 +319,9 @@ void MainMenuScene::activateRootItem(int index)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 設定ページの操作 (Esc で戻るのみ)
+//---------------------------------------------------------------------------
 void MainMenuScene::updateSettings(InputManager* input)
 {
     // TODO(settings): 設定ページは空シェル
@@ -291,11 +332,21 @@ void MainMenuScene::updateSettings(InputManager* input)
     }
 }
 
+//---------------------------------------------------------------------------
+//! ウィンドウ座標 -> 1920x1080 基準座標 (レターボックス分を補正)
+//---------------------------------------------------------------------------
 Vector2 MainMenuScene::toRefSpace(const Vector2& windowPos) const
 {
     return m_renderer ? m_renderer->WindowToRef(windowPos) : windowPos;
 }
 
+//===========================================================================
+// 描画
+//===========================================================================
+
+//---------------------------------------------------------------------------
+//! 固定カメラで3D背景を描き、現在のページのUIを重ねます
+//---------------------------------------------------------------------------
 void MainMenuScene::render()
 {
     const int rw = m_renderer->GetRenderWidth();
@@ -327,6 +378,9 @@ void MainMenuScene::render()
     //renderTuningPanel();
 }
 
+//---------------------------------------------------------------------------
+//! 3D背景 (グリッドのみ)
+//---------------------------------------------------------------------------
 void MainMenuScene::renderMenuWorld(
     const Matrix& view,
     const Matrix& proj)
@@ -337,6 +391,9 @@ void MainMenuScene::renderMenuWorld(
     }
 }
 
+//---------------------------------------------------------------------------
+//! カメラ・ブルーム調整用 ImGui パネル (通常は呼び出しをコメントアウト)
+//---------------------------------------------------------------------------
 void MainMenuScene::renderTuningPanel()
 {
     ImGui::SetNextWindowPos(ImVec2(16.0f, 16.0f), ImGuiCond_FirstUseEver);
@@ -412,6 +469,9 @@ void MainMenuScene::renderTuningPanel()
     ImGui::End();
 }
 
+//---------------------------------------------------------------------------
+//! タイトル + 項目一覧
+//---------------------------------------------------------------------------
 void MainMenuScene::renderRoot()
 {
     UIRenderer* ui = m_renderer->GetUI();

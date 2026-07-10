@@ -1,7 +1,7 @@
 #ifndef IBL_COMMON_HLSLI
 #define IBL_COMMON_HLSLI
 
-#include "../Common.hlsli"
+#include "Common.hlsli"
 
 static const float PI = 3.14159265359;
 static const float TWO_PI = 6.28318530718;

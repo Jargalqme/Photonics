@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   RenderCommandQueue.cpp
+//! @brief  描画コマンドキュー
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
 
 void RenderCommandQueue::clear()

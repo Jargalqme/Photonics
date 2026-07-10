@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   RenderCommand.h
+//! @brief  描画コマンド定義 (シーン -> キュー投入用の POD)
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "GeometricPrimitive.h"
 #include <SimpleMath.h>
@@ -6,6 +10,7 @@
 class Billboard;
 class ImportedModel;
 
+//! ブレンドモード (キューの不透明/半透明振り分けキー)
 enum class BlendMode
 {
 	Opaque,
@@ -13,6 +18,9 @@ enum class BlendMode
 	Additive
 };
 
+//! GeometricPrimitive 描画コマンド
+//! 注意: GeometricPrimitive::Draw はブレンド/深度を color のアルファで決める
+//! (alpha < 1 で AlphaBlend + DepthRead)。blendMode はキュー振り分けにのみ効く
 struct MeshCommand
 {
 	DirectX::DX11::GeometricPrimitive* mesh = nullptr;
@@ -23,6 +31,7 @@ struct MeshCommand
 	bool                         wireframe = false;
 };
 
+//! ビルボード描画コマンド (常に半透明バケットに積まれる)
 struct BillboardCommand
 {
 	const Billboard* billboard = nullptr;
@@ -30,6 +39,7 @@ struct BillboardCommand
 	float size = 1.0f;
 };
 
+//! インポートモデル描画コマンド
 struct ImportedModelCommand
 {
 	const ImportedModel* model = nullptr;

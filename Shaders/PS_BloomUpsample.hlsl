@@ -3,8 +3,8 @@
 //! @brief  9-tap tent upsample (mip[i+1] to mip[i], additive blend)
 //---------------------------------------------------------------------------
 
-#include "Common.hlsli"
-#include "Sampling.hlsli"
+#include "Includes/Common.hlsli"
+#include "Includes/Sampling.hlsli"
 
 cbuffer BloomParams : register(b0)
 {

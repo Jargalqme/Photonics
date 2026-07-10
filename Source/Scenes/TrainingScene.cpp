@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   TrainingScene.cpp
+//! @brief  トレーニングシーン (射撃練習場)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Scenes/TrainingScene.h"
 #include "Gameplay/PlayerCamera.h"
 #include "DeviceResources.h"
@@ -19,6 +23,9 @@ namespace
     constexpr float RIFLE_FIRE_PITCH_JITTER = 0.015f;
     constexpr const wchar_t* ENVIRONMENT_LAYOUT_PATH = L"Environment/environment.json";
 
+    //---------------------------------------------------------------------------
+    //! 発射音グループをロード (バリエーション不在時は単発SEへフォールバック)
+    //---------------------------------------------------------------------------
     void loadRifleFireAudio(AudioManager& audio)
     {
         if (audio.loadSoundGroupFromDirectory(
@@ -42,6 +49,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 TrainingScene::TrainingScene(SceneManager* sceneManager)
     : Scene("Training")
     , m_sceneManager(sceneManager)
@@ -50,8 +60,13 @@ TrainingScene::TrainingScene(SceneManager* sceneManager)
 
 TrainingScene::~TrainingScene() = default;
 
-// === 初期化 ===
+//===========================================================================
+// 初期化
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 全サブシステムを構築します (ライティング -> カメラ -> プレイヤー -> VFX -> ワールド -> UI)
+//---------------------------------------------------------------------------
 void TrainingScene::initialize(SceneContext& context)
 {
     Scene::initialize(context);
@@ -112,8 +127,14 @@ void TrainingScene::initialize(SceneContext& context)
     m_debugUI->setSceneLighting(&m_lighting);
 }
 
-// === シーン遷移 ===
+//===========================================================================
+// シーン遷移
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! イベント購読の再登録 + ゲーム状態リセット
+//! EventBus は exit で clear されるため、購読はここで毎回登録し直す
+//---------------------------------------------------------------------------
 void TrainingScene::enter()
 {
     Scene::enter();
@@ -167,6 +188,9 @@ void TrainingScene::enter()
     m_renderer->GetSceneRenderer()->setActiveCamera(m_camera.get());
 }
 
+//---------------------------------------------------------------------------
+//! 購読解除 + カメラ・ブルームを返却
+//---------------------------------------------------------------------------
 void TrainingScene::exit()
 {
     Scene::exit();
@@ -179,6 +203,9 @@ void TrainingScene::exit()
     }
 }
 
+//---------------------------------------------------------------------------
+//! GPU リソース解放 -> オブジェクト破棄
+//---------------------------------------------------------------------------
 void TrainingScene::finalize()
 {
     if (m_grid) { m_grid->finalize(); }
@@ -198,8 +225,13 @@ void TrainingScene::finalize()
     m_debugUI.reset();
 }
 
-// === 更新 ===
+//===========================================================================
+// 更新
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 入力 -> ゲームプレイ系統 -> イベント配信 -> カメラ -> サブシステム
+//---------------------------------------------------------------------------
 void TrainingScene::update(float deltaTime, InputManager* input)
 {
     // === 入力 ===
@@ -251,8 +283,13 @@ void TrainingScene::update(float deltaTime, InputManager* input)
     m_grid->update();
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! レンダーパスを順に実行します
+//---------------------------------------------------------------------------
 void TrainingScene::render()
 {
     const auto view   = m_camera->matView();
@@ -265,8 +302,13 @@ void TrainingScene::render()
     renderUI(view, proj);                 // GameUI + 訓練パネル + デバッグ
 }
 
-// === レンダーパス ===
+//===========================================================================
+// レンダーパス
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! グリッド + ダミー + 静的環境レイアウト
+//---------------------------------------------------------------------------
 void TrainingScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
     m_grid->render(view, proj);
@@ -297,12 +339,18 @@ void TrainingScene::renderWorld(const Matrix& view, const Matrix& proj, const Ve
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, proj, camPos, m_lighting);
 }
 
+//---------------------------------------------------------------------------
+//! パーティクル・トレーサー
+//---------------------------------------------------------------------------
 void TrainingScene::renderEffects(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
     m_particleSystem->render(view, proj);
     m_tracers->render(view, proj, camPos);
 }
 
+//---------------------------------------------------------------------------
+//! 武器ビューモデル (深度クリアで常に最前面)
+//---------------------------------------------------------------------------
 void TrainingScene::renderViewmodel(const Matrix& view, const Vector3& camPos)
 {
     m_renderer->BeginViewmodelPass();   // 深度クリアして常に最前面に描画
@@ -312,6 +360,9 @@ void TrainingScene::renderViewmodel(const Matrix& view, const Vector3& camPos)
     m_renderer->ExecuteRenderCommands(m_renderQueue, view, m_camera->matViewmodelProj(), camPos, m_lighting);
 }
 
+//---------------------------------------------------------------------------
+//! GameUI + デバッグ (F3 中のみ)
+//---------------------------------------------------------------------------
 void TrainingScene::renderUI(const Matrix& view, const Matrix& proj)
 {
     m_gameUI->render(view, proj);

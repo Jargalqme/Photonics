@@ -88,9 +88,9 @@ const ImportedModel* ImportedModelCache::get(const std::string& path)
     {
         TraceLine("[ImportedModelCache]   " + node.name
             + " pos=("
-            + std::to_string(node.position.x) + ", "
-            + std::to_string(node.position.y) + ", "
-            + std::to_string(node.position.z) + ")"
+            + std::to_string(node.modelPosition.x) + ", "
+            + std::to_string(node.modelPosition.y) + ", "
+            + std::to_string(node.modelPosition.z) + ")"
             + " meshes=" + std::to_string(node.meshCount));
     }
 

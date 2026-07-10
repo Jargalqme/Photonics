@@ -1,5 +1,9 @@
-﻿#include "pch.h"
-#include "Render/Visuals/Skybox.h"
+﻿//---------------------------------------------------------------------------
+//! @file   Cubemap.cpp
+//! @brief  キューブマップ (背景描画 + IBL の環境ソース)
+//---------------------------------------------------------------------------
+#include "pch.h"
+#include "Render/Visuals/Cubemap.h"
 #include "Render/Pipeline/RenderUtil.h"
 #include "WICTextureLoader.h"
 
@@ -7,14 +11,22 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
-Skybox::Skybox(DX::DeviceResources* deviceResources)
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
+Cubemap::Cubemap(DX::DeviceResources* deviceResources)
     : m_deviceResources(deviceResources)
 {
 }
 
-// === 初期化・終了 ===
+//===========================================================================
+// 初期化・終了
+//===========================================================================
 
-void Skybox::initialize()
+//---------------------------------------------------------------------------
+//! 6面PNG -> キューブマップ合成 -> 描画ステート構築
+//---------------------------------------------------------------------------
+void Cubemap::initialize()
 {
     auto device = m_deviceResources->GetD3DDevice();
     auto context = m_deviceResources->GetD3DDeviceContext();
@@ -86,8 +98,8 @@ void Skybox::initialize()
     DX::ThrowIfFailed(device->CreateSamplerState(&sampDesc, m_sampler.GetAddressOf()));
 
     // シェーダー読み込み
-    m_vertexShader = RenderUtil::loadVS(device, L"VS_Skybox.cso");
-    m_pixelShader = RenderUtil::loadPS(device, L"PS_Skybox.cso");
+    m_vertexShader = RenderUtil::loadVS(device, L"VS_Cubemap.cso");
+    m_pixelShader = RenderUtil::loadPS(device, L"PS_Cubemap.cso");
 
     // 深度ステンシル：テストなし、書き込みなし
     D3D11_DEPTH_STENCIL_DESC dsDesc = {};
@@ -105,7 +117,7 @@ void Skybox::initialize()
         &rsDesc, m_rasterizerState.ReleaseAndGetAddressOf()));
 }
 
-void Skybox::finalize()
+void Cubemap::finalize()
 {
     m_vertexShader.Reset();
     m_pixelShader.Reset();
@@ -115,9 +127,14 @@ void Skybox::finalize()
     m_rasterizerState.Reset();
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
-void Skybox::render()
+//---------------------------------------------------------------------------
+//! フルスクリーン三角形で背景を描画します
+//---------------------------------------------------------------------------
+void Cubemap::render()
 {
     auto context = m_deviceResources->GetD3DDeviceContext();
 

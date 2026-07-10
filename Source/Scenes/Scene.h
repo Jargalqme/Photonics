@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   Scene.h
+//! @brief  シーン基底クラス
+//---------------------------------------------------------------------------
+#pragma once
 
 #include <string>
 #include "Services/SceneContext.h"
@@ -12,7 +16,10 @@ namespace DX {
     class DeviceResources;
 }
 
-/// シーン基底クラス
+//===========================================================================
+//! シーン基底クラス
+//! ライフサイクル: initialize (登録時に1回) -> enter/exit (切替の度) -> finalize
+//===========================================================================
 class Scene
 {
 public:
@@ -26,6 +33,7 @@ public:
     }
     virtual ~Scene() = default;
 
+    //! コンテキストの参照を控えます (オーバーライド側は必ず基底を呼ぶこと)
     virtual void initialize(SceneContext& context)
     {
         m_context = &context;
@@ -33,6 +41,7 @@ public:
         m_renderer = context.renderer;
     }
 
+    //! アクティブ化 (オーバーライド側は必ず基底を呼ぶこと。exit も同様)
     virtual void enter() { m_isActive = true; }
     virtual void exit() { m_isActive = false; }
     virtual void finalize() {}
@@ -43,9 +52,9 @@ public:
     bool isActive() const { return m_isActive; }
 
 protected:
-    std::string m_name;
-    bool m_isActive;
-    SceneContext* m_context;
-    DX::DeviceResources* m_deviceResources;
-    Renderer* m_renderer;
+    std::string m_name;                          //!< シーン名 (SceneManager の登録キーとは別)
+    bool m_isActive;                             //!< enter/exit で更新 (false 中は update されない)
+    SceneContext* m_context;                     //!< 共有サービス (非所有)
+    DX::DeviceResources* m_deviceResources;      //!< デバイスリソース (非所有)
+    Renderer* m_renderer;                        //!< レンダラ (非所有)
 };

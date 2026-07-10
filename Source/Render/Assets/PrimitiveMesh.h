@@ -1,3 +1,7 @@
+//---------------------------------------------------------------------------
+//! @file   PrimitiveMesh.h
+//! @brief  PBR 用プリミティブメッシュ生成 (ImportedModelData を組み立てる)
+//---------------------------------------------------------------------------
 #pragma once
 
 #include <cstdint>
@@ -6,15 +10,15 @@
 
 namespace PrimitiveMesh
 {
-	// Quad centered at the origin on the XY plane, facing +Z.
-	// uvTiling controls the UV range written across the surface.
+	//! 原点中心・XY 平面のクアッド (+Z 向き)
+	//! uvTiling で表面に書き込む UV 範囲を指定
 	ImportedModelData CreatePBRQuad(
 		float width = 1.0f,
 		float height = 1.0f,
 		DirectX::SimpleMath::Vector2 uvTiling = DirectX::SimpleMath::Vector2(1.0f, 1.0f));
 
-	// Box centered at the origin. Each face has unique vertices so normals,
-	// tangents, and UVs are correct for PBR texture sampling.
+	//! 原点中心のボックス
+	//! 面ごとに頂点を複製し、法線/接線/UV を PBR サンプリング用に正しく持つ
 	ImportedModelData CreatePBRBox(
 		float width = 1.0f,
 		float height = 1.0f,

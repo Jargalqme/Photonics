@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   PrimitiveMesh.cpp
+//! @brief  PBR 用プリミティブメッシュ生成
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Assets/PrimitiveMesh.h"
 
 #include <algorithm>
@@ -8,9 +12,12 @@ using DirectX::SimpleMath::Color;
 using DirectX::SimpleMath::Vector2;
 using DirectX::SimpleMath::Vector3;
 
+//===========================================================================
+// ファイル内ヘルパ
+//===========================================================================
 namespace
 {
-	constexpr float kMinDimension     = 0.001f;
+	constexpr float kMinDimension     = 0.001f;    //!< 退化面防止の最小寸法
 	constexpr float kDefaultRoughness = 0.5f;
 
 	float SanitizeDimension(float value)
@@ -46,6 +53,10 @@ namespace
 		data.submeshes.push_back(submesh);
 	}
 
+	//-----------------------------------------------------------------------
+	//! 1面 (4頂点 + 6インデックス) を追加します
+	//! halfU/halfV は面中心からの半幅ベクトル、UV は左上 (0,0) -> 右下 (uvTiling)
+	//-----------------------------------------------------------------------
 	void AddFace(
 		ImportedModelData& data,
 		const Vector3& center,
@@ -85,7 +96,7 @@ namespace
 
 		data.vertices.insert(data.vertices.end(), std::begin(vertices), std::end(vertices));
 
-		// Clockwise winding for the current D3D11 imported-model rasterizer.
+		// 現行の D3D11 インポートモデル用ラスタライザに合わせて時計回り
 		data.indices.push_back(baseIndex + 0);
 		data.indices.push_back(baseIndex + 2);
 		data.indices.push_back(baseIndex + 1);

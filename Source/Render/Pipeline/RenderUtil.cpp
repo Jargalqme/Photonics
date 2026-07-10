@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   RenderUtil.cpp
+//! @brief  D3D11 オブジェクト生成/更新の共通イディオム集
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Pipeline/RenderUtil.h"
 
 using Microsoft::WRL::ComPtr;

@@ -1,12 +1,21 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   Transform.h
+//! @brief  トランスフォーム (SRT)
+//---------------------------------------------------------------------------
+#pragma once
 #include <SimpleMath.h>
 
+//===========================================================================
+//! トランスフォーム
+//! getMatrix は S * R * T の順で合成 (SimpleMath は行ベクトル規約)
+//===========================================================================
 struct Transform
 {
     DirectX::SimpleMath::Vector3 scale    = { 1.0f, 1.0f, 1.0f };
-    DirectX::SimpleMath::Vector3 rotation = { 0.0f, 0.0f, 0.0f };  // オイラー角（ラジアン: pitch, yaw, roll）
+    DirectX::SimpleMath::Vector3 rotation = { 0.0f, 0.0f, 0.0f };  //!< オイラー角 (ラジアン: pitch, yaw, roll)
     DirectX::SimpleMath::Vector3 position = { 0.0f, 0.0f, 0.0f };
 
+    //! ワールド行列を構築します
     DirectX::SimpleMath::Matrix getMatrix() const
     {
         const DirectX::SimpleMath::Matrix S = DirectX::SimpleMath::Matrix::CreateScale(scale);

@@ -1,5 +1,9 @@
-﻿#include "pch.h"
-#include "Render/Visuals/ArenaFloor.h"
+﻿//---------------------------------------------------------------------------
+//! @file   WaveEffect.cpp
+//! @brief  波エフェクト (波形シェーダーの発光面)
+//---------------------------------------------------------------------------
+#include "pch.h"
+#include "Render/Visuals/WaveEffect.h"
 #include "Render/Pipeline/RenderUtil.h"
 #include "DeviceResources.h"
 #include "Services/SceneContext.h"
@@ -7,11 +11,16 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-ArenaFloor::ArenaFloor(SceneContext& context) : m_context(&context) {}
+WaveEffect::WaveEffect(SceneContext& context) : m_context(&context) {}
 
-// === 初期化 ===
+//===========================================================================
+// 初期化・終了
+//===========================================================================
 
-void ArenaFloor::initialize()
+//---------------------------------------------------------------------------
+//! 垂直平面のジオメトリとシェーダーを構築します
+//---------------------------------------------------------------------------
+void WaveEffect::initialize()
 {
     auto device = m_context->device->GetD3DDevice();
 
@@ -31,7 +40,7 @@ void ArenaFloor::initialize()
 
     m_vertexBuffer   = RenderUtil::createStaticVertexBuffer(device, vertices, static_cast<UINT>(std::size(vertices)));
     m_indexBuffer    = RenderUtil::createStaticIndexBuffer (device, indices,  static_cast<UINT>(std::size(indices)));
-    m_constantBuffer = RenderUtil::createDynamicConstantBuffer<ArenaFloorCB>(device);
+    m_constantBuffer = RenderUtil::createDynamicConstantBuffer<WaveEffectCB>(device);
 
     Microsoft::WRL::ComPtr<ID3DBlob> vsBlob;
     m_vertexShader = RenderUtil::loadVS(device, L"VS_WaveWorld.cso", &vsBlob);
@@ -49,9 +58,7 @@ void ArenaFloor::initialize()
         m_inputLayout.ReleaseAndGetAddressOf()));
 }
 
-// === 終了処理 ===
-
-void ArenaFloor::finalize()
+void WaveEffect::finalize()
 {
     m_vertexBuffer.Reset();
     m_indexBuffer.Reset();
@@ -61,14 +68,22 @@ void ArenaFloor::finalize()
     m_inputLayout.Reset();
 }
 
-// === 更新 ===
+//===========================================================================
+// 更新
+//===========================================================================
 
-void ArenaFloor::update(float deltaTime)
+//---------------------------------------------------------------------------
+//! 波形アニメーションの時間を進めます
+//---------------------------------------------------------------------------
+void WaveEffect::update(float deltaTime)
 {
     m_time += deltaTime;
 }
 
-void ArenaFloor::setTransform(
+//---------------------------------------------------------------------------
+//! 配置を設定します (回転は度)
+//---------------------------------------------------------------------------
+void WaveEffect::setTransform(
     const Vector3& position,
     const Vector3& rotationDegrees,
     const Vector3& scale)
@@ -78,9 +93,14 @@ void ArenaFloor::setTransform(
     m_scale = scale;
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
-void ArenaFloor::render(const Matrix& view, const Matrix& projection)
+//---------------------------------------------------------------------------
+//! 平面を描画します (アルファブレンド・深度読み取りのみ)
+//---------------------------------------------------------------------------
+void WaveEffect::render(const Matrix& view, const Matrix& projection)
 {
     auto context = m_context->device->GetD3DDeviceContext();
 
@@ -92,7 +112,7 @@ void ArenaFloor::render(const Matrix& view, const Matrix& projection)
             XMConvertToRadians(m_rotationDegrees.x),
             XMConvertToRadians(m_rotationDegrees.z)) *
         Matrix::CreateTranslation(m_position);
-    ArenaFloorCB cb;
+    WaveEffectCB cb;
     XMStoreFloat4x4(&cb.worldViewProjection,
         (world * view * projection).Transpose());
     cb.time = m_time;

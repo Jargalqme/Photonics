@@ -3,8 +3,8 @@
 //! @brief  HDR bloom composite: scene + tent-upsampled bloom.
 //---------------------------------------------------------------------------
 
-#include "Common.hlsli"
-#include "Sampling.hlsli"
+#include "Includes/Common.hlsli"
+#include "Includes/Sampling.hlsli"
 
 cbuffer BloomParams : register(b0)
 {

@@ -117,11 +117,11 @@
     <ClInclude Include="Source\Gameplay\Bullet.h" />
     <ClInclude Include="Source\Gameplay\BulletPool.h" />
     <ClInclude Include="Source\Render\Visuals\ParticleSystem.h" />
-    <ClInclude Include="Source\Render\Visuals\Skybox.h" />
+    <ClInclude Include="Source\Render\Visuals\Cubemap.h" />
     <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
     <ClInclude Include="Source\Render\Visuals\Billboard.h" />
     <ClInclude Include="Source\Gameplay\BossAttackManager.h" />
-    <ClInclude Include="Source\Render\Visuals\ArenaFloor.h" />
+    <ClInclude Include="Source\Render\Visuals\WaveEffect.h" />
     <ClInclude Include="Source\Common\Spring.h" />
     <ClInclude Include="Source\Gameplay\Weapon\WeaponMotion.h">
       <Filter>Weapon</Filter>
@@ -240,11 +240,11 @@
     <ClCompile Include="Source\Gameplay\Bullet.cpp" />
     <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
     <ClCompile Include="Source\Render\Visuals\ParticleSystem.cpp" />
-    <ClCompile Include="Source\Render\Visuals\Skybox.cpp" />
+    <ClCompile Include="Source\Render\Visuals\Cubemap.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
     <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
     <ClCompile Include="Source\Gameplay\BossAttackManager.cpp" />
-    <ClCompile Include="Source\Render\Visuals\ArenaFloor.cpp" />
+    <ClCompile Include="Source\Render\Visuals\WaveEffect.cpp" />
     <ClCompile Include="Source\Gameplay\Weapon\WeaponMotion.cpp">
       <Filter>Weapon</Filter>
     </ClCompile>
@@ -330,8 +330,8 @@
     <FxCompile Include="Shaders\PS_Particle.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\VS_Skybox.hlsl" />
-    <FxCompile Include="Shaders\PS_Skybox.hlsl" />
+    <FxCompile Include="Shaders\VS_Cubemap.hlsl" />
+    <FxCompile Include="Shaders\PS_Cubemap.hlsl" />
     <FxCompile Include="Shaders\VS_FullscreenTriangle.hlsl" />
     <FxCompile Include="Shaders\PS_BloomPrefilter.hlsl" />
     <FxCompile Include="Shaders\PS_BloomDownsample.hlsl" />
@@ -345,11 +345,12 @@
     <FxCompile Include="Shaders\CS_IrradianceConvolution.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Common.hlsli" />
-    <None Include="Shaders\Sampling.hlsli" />
-    <None Include="Shaders\Camera.hlsli" />
-    <None Include="Shaders\BRDF.hlsli" />
+    <None Include="Shaders\Includes\Common.hlsli" />
+    <None Include="Shaders\Includes\Sampling.hlsli" />
+    <None Include="Shaders\Includes\Camera.hlsli" />
+    <None Include="Shaders\Includes\BRDF.hlsli" />
     <None Include="Shaders\Includes\IBLCommon.hlsli" />
     <None Include="Shaders\Includes\Lighting.hlsli" />
+    <None Include="Shaders\Includes\Tonemapping.hlsli" />
   </ItemGroup>
 </Project>

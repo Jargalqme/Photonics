@@ -1,9 +1,18 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   MenuBackground.h
+//! @brief  メニュー背景 (フルスクリーンシェーダー演出)
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "DeviceResources.h"
 #include <memory>
 #include <vector>
 
+//===========================================================================
+//! メニュー背景
+//! 3種のピクセルシェーダーを切り替えるフルスクリーン演出背景
+//! (イントロ = Warping, リザルト = Wave など)。finalize 相当は onDeviceLost
+//===========================================================================
 class MenuBackground
 {
 public:
@@ -17,8 +26,14 @@ public:
     MenuBackground& operator=(MenuBackground const&) = delete;
 
     void initialize();
+
+    //! シェーダーアニメーションの時間を進めます
     void update(float deltaTime);
+
+    //! フルスクリーンで描画します (width/height はシェーダーの解像度入力)
     void render(int width, int height);
+
+    //! GPUリソースを解放します (finalize 相当)
     void onDeviceLost();
 
     // シェーダーパラメータ設定
@@ -39,14 +54,14 @@ public:
     void setShaderType(ShaderType type);
 
 private:
-    // フルスクリーン四角形頂点（クリップ空間座標 + UV）
+    //! フルスクリーン四角形頂点（クリップ空間座標 + UV）
     struct MenuVertex
     {
         DirectX::XMFLOAT3 position;
         DirectX::XMFLOAT2 uv;
     };
 
-    // HLSL 定数バッファと一致（48バイト、アラインメント済み）
+    //! HLSL 定数バッファと一致（48バイト、アラインメント済み）
     struct MenuBackgroundCB
     {
         float Time;

@@ -515,8 +515,8 @@ namespace
         {
             ImportedModelNode namedNode;
             namedNode.name = nodeName;
-            namedNode.localTransform = ToMatrix(nodeTransform);
-            namedNode.position = ToVector3(TransformOrigin(nodeTransform));
+            namedNode.modelTransform = ToMatrix(nodeTransform);
+            namedNode.modelPosition = ToVector3(TransformOrigin(nodeTransform));
             namedNode.meshCount = node->mNumMeshes;
             outData.namedNodes.push_back(std::move(namedNode));
         }

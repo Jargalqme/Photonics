@@ -1,7 +1,16 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   Bloom.h
+//! @brief  ブルーム ポストエフェクト
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "Core/DeviceResources.h"
 
+//===========================================================================
+//! ブルーム
+//! 高輝度部分を抽出 -> ミップチェーンでダウン/アップサンプル -> シーンと合成
+//! 入出力とも HDR (結果は getOutputSRV() で取得)
+//===========================================================================
 class Bloom
 {
 public:
@@ -9,9 +18,10 @@ public:
     ~Bloom() = default;
 
     void createDeviceDependentResources();
-    void createWindowSizeDependentResources(int width, int height);
+    void createRenderTargets(int width, int height);
     void finalize();
 
+    //! シーンにブルームを適用します (結果は内部の合成RTへ)
     void render(ID3D11ShaderResourceView* sceneSRV);
 
     ID3D11ShaderResourceView* getOutputSRV() { return m_compositeSRV.Get(); }
@@ -27,7 +37,7 @@ public:
     float* getUpsampleScalePtr() { return &m_upsampleScale; }
 
 private:
-    static constexpr int MIP_COUNT = 7;
+    static constexpr int MIP_COUNT = 7;    //!< ミップチェーン段数
 
     void renderFullscreenPass(ID3D11PixelShader* ps,
         ID3D11RenderTargetView* outputRTV,
@@ -40,7 +50,7 @@ private:
     UINT m_targetWidth = 0;
     UINT m_targetHeight = 0;
 
-    // ブルームミップチェーン（5レベル）
+    // ブルームミップチェーン (各レベルは前の半分の解像度)
     com_ptr<ID3D11Texture2D>          m_mipTextures[MIP_COUNT];
     com_ptr<ID3D11RenderTargetView>   m_mipRTVs[MIP_COUNT];
     com_ptr<ID3D11ShaderResourceView> m_mipSRVs[MIP_COUNT];
@@ -71,7 +81,7 @@ private:
     float m_intensity = 1.0f;
     float m_upsampleScale = 1.0f;
 
-    // HLSL 定数バッファと一致
+    //! HLSL 側の定数バッファとレイアウト一致 (16バイト境界)
     struct BloomParamsCB
     {
         DirectX::XMFLOAT2 texelSize;

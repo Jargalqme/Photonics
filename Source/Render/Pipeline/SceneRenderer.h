@@ -26,7 +26,7 @@ public:
     SceneRenderer& operator=(SceneRenderer const&) = delete;
 
     void createDeviceDependentResources();
-    void createWindowSizeDependentResources(int width, int height);
+    void createRenderTargets(int width, int height);
     void onDeviceLost();
 
     // Run the post-process chain. Source is the HDR scene SRV;

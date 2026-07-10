@@ -127,7 +127,7 @@ void Renderer::CreateDeviceDependentResources()
 
 void Renderer::CreateSceneResources()
 {
-    m_sceneRenderer->createWindowSizeDependentResources(kRenderWidth, kRenderHeight);
+    m_sceneRenderer->createRenderTargets(kRenderWidth, kRenderHeight);
 
     auto device = m_deviceResources->GetD3DDevice();
     UINT width = static_cast<UINT>(kRenderWidth);

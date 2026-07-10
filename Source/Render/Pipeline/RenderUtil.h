@@ -1,10 +1,18 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   RenderUtil.h
+//! @brief  D3D11 オブジェクト生成/更新の共通イディオム集
+//---------------------------------------------------------------------------
+#pragma once
 
 #include <string>
 
+//===========================================================================
+//! 命名規約: create<用途><種別>Buffer / update<用途><種別>Buffer の対
+//! (Static 系に update が無いのは「生成時に一度だけ」の契約を表す)
+//===========================================================================
 namespace RenderUtil
 {
-	// === 定数バッファ作成（DYNAMIC + CPU_WRITE）===
+	//! 定数バッファ作成 (DYNAMIC + CPU_WRITE)
 	template <typename T>
 	Microsoft::WRL::ComPtr<ID3D11Buffer> createDynamicConstantBuffer(ID3D11Device* device)
 	{
@@ -21,9 +29,9 @@ namespace RenderUtil
 		return buffer;
 	}
 
-	// === 定数バッファ 更新（DYNAMIC + Map/WRITE_DISCARD）===
-	// 参考：contract: learn.microsoft.com .../how-to-use-dynamic-resources
-	//		framework CommandList::updateSubresource (gpu_command_list.cpp:193)
+	//! 定数バッファ更新 (DYNAMIC + Map/WRITE_DISCARD)
+	//! 参考: contract: learn.microsoft.com .../how-to-use-dynamic-resources
+	//!       framework CommandList::updateSubresource (gpu_command_list.cpp:193)
 	template <typename T>
 	void updateDynamicConstantBuffer(ID3D11DeviceContext* context,
 		const Microsoft::WRL::ComPtr<ID3D11Buffer>& buffer,
@@ -33,11 +41,11 @@ namespace RenderUtil
 			"D3D11 constant buffer size must be a multiple of 16 bytes.");
 		D3D11_MAPPED_SUBRESOURCE mapped = {};
 		DX::ThrowIfFailed(context->Map(buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
-		memcpy(mapped.pData, &data, sizeof(T));		// pData is write-combine memory: write only, never read
+		memcpy(mapped.pData, &data, sizeof(T));		// pData はライトコンバインメモリ -> 書き込み専用 (読み取り厳禁)
 		context->Unmap(buffer.Get(), 0);
 	}
 
-	// === 静的 頂点バッファ（IMMUTABLE + 初期データ）===
+	//! 静的頂点バッファ作成 (IMMUTABLE + 初期データ)
 	template <typename T>
 	Microsoft::WRL::ComPtr<ID3D11Buffer> createStaticVertexBuffer(
 		ID3D11Device* device, const T* data, UINT count)
@@ -55,7 +63,7 @@ namespace RenderUtil
 		return buffer;
 	}
 
-	// === 静的 インデックスバッファ（IMMUTABLE + 初期データ）===
+	//! 静的インデックスバッファ作成 (IMMUTABLE + 初期データ)
 	template <typename T>
 	Microsoft::WRL::ComPtr<ID3D11Buffer> createStaticIndexBuffer(
 		ID3D11Device* device, const T* data, UINT count)
@@ -73,8 +81,8 @@ namespace RenderUtil
 		return buffer;
 	}
 
-	// === シェーダ読み込み（.cso 前提、コンパイル済みバイトコード） ===
-	// outBlob は入力レイアウト作成用にバイトコードが必要な場合のみ渡す
+	//! シェーダー読み込み (コンパイル済み .cso 前提)
+	//! outBlob は入力レイアウト作成用にバイトコードが必要な場合のみ渡す
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> loadVS(
 		ID3D11Device* device,
 		const std::wstring& filename,

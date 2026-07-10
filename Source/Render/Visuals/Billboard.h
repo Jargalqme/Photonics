@@ -1,9 +1,18 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   Billboard.h
+//! @brief  ビルボード (常にカメラを向くテクスチャクアッド)
+//---------------------------------------------------------------------------
+#pragma once
 
 #include <string>
 
 struct SceneContext;
 
+//===========================================================================
+//! ビルボード
+//! ビュー行列から取り出したカメラの右・上ベクトルでクアッドを展開する。
+//! 頂点バッファ無し (SV_VertexID で生成)、加算合成
+//===========================================================================
 class Billboard
 {
 public:
@@ -12,6 +21,7 @@ public:
 
 	void initialize(const std::wstring& texturePath);
 
+	//! 指定位置に1枚描画します (加算合成・深度読み取りのみ)
 	void render(
 		const DirectX::SimpleMath::Matrix& view,
 		const DirectX::SimpleMath::Matrix& projection,

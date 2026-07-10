@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   AudioManager.cpp
+//! @brief  オーディオ管理 (SE・SEグループ・BGM)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "AudioManager.h"
 
 #include <algorithm>
@@ -6,18 +10,29 @@
 
 using namespace DirectX;
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 AudioManager::AudioManager()
     : m_rng(std::random_device{}())
 {
 }
 
+//---------------------------------------------------------------------------
+//! デストラクタ (finalize 忘れの保険)
+//---------------------------------------------------------------------------
 AudioManager::~AudioManager()
 {
     finalize();
 }
 
-// === 初期化・終了 ===
+//===========================================================================
+// 初期化・終了
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! エンジンを構築します (デバイスなしでも false を返して無音続行)
+//---------------------------------------------------------------------------
 bool AudioManager::initialize()
 {
     if (m_initialized)
@@ -49,6 +64,9 @@ bool AudioManager::initialize()
     return true;
 }
 
+//---------------------------------------------------------------------------
+//! エンジン内部の更新
+//---------------------------------------------------------------------------
 void AudioManager::update()
 {
     if (!m_audioEngine)
@@ -65,6 +83,9 @@ void AudioManager::update()
     m_audioEngine->Update();
 }
 
+//---------------------------------------------------------------------------
+//! BGM停止 -> サウンドデータ解放 -> エンジン解放 (順序固定)
+//---------------------------------------------------------------------------
 void AudioManager::finalize()
 {
     if (!m_initialized)
@@ -92,8 +113,13 @@ void AudioManager::finalize()
     OutputDebugStringA("AudioManager: Shutdown complete\n");
 }
 
-// === 読み込み ===
+//===========================================================================
+// 読み込み
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 単発SEを読み込みます
+//---------------------------------------------------------------------------
 bool AudioManager::loadSound(const std::string& name, const std::wstring& filepath)
 {
     if (!m_audioEngine)
@@ -115,6 +141,9 @@ bool AudioManager::loadSound(const std::string& name, const std::wstring& filepa
     }
 }
 
+//---------------------------------------------------------------------------
+//! ディレクトリから prefix 一致の .wav をまとめてグループ登録 (名前順)
+//---------------------------------------------------------------------------
 bool AudioManager::loadSoundGroupFromDirectory(
     const std::string& groupName,
     const std::wstring& directory,
@@ -182,6 +211,9 @@ bool AudioManager::loadSoundGroupFromDirectory(
     return true;
 }
 
+//---------------------------------------------------------------------------
+//! 読込済みの単発SEをグループへ追加します
+//---------------------------------------------------------------------------
 bool AudioManager::addSoundToGroup(const std::string& groupName, const std::string& soundName)
 {
     if (m_sounds.find(soundName) == m_sounds.end())
@@ -199,6 +231,9 @@ bool AudioManager::addSoundToGroup(const std::string& groupName, const std::stri
     return true;
 }
 
+//---------------------------------------------------------------------------
+//! BGM を読み込みます
+//---------------------------------------------------------------------------
 bool AudioManager::loadMusic(const std::string& name, const std::wstring& filepath)
 {
     if (!m_audioEngine)
@@ -220,8 +255,13 @@ bool AudioManager::loadMusic(const std::string& name, const std::wstring& filepa
     }
 }
 
-// === 再生 ===
+//===========================================================================
+// 再生
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! SE を fire-and-forget 再生します
+//---------------------------------------------------------------------------
 void AudioManager::playSound(const std::string& name, float volume, float pitch, float pan)
 {
     if (!m_audioEngine)
@@ -242,6 +282,9 @@ void AudioManager::playSound(const std::string& name, float volume, float pitch,
     it->second->Play(volume * m_masterVolume, pitch, pan);
 }
 
+//---------------------------------------------------------------------------
+//! グループからランダム再生 (直前と同じ変種は避ける)
+//---------------------------------------------------------------------------
 void AudioManager::playRandomSound(
     const std::string& groupName,
     float volume,
@@ -285,6 +328,9 @@ void AudioManager::playRandomSound(
     playSound(group[variant], finalVolume, finalPitch, 0.0f);
 }
 
+//---------------------------------------------------------------------------
+//! BGM を再生します (再生中の曲は停止して差し替え)
+//---------------------------------------------------------------------------
 void AudioManager::playMusic(const std::string& name, bool loop)
 {
     if (!m_audioEngine)
@@ -312,6 +358,9 @@ void AudioManager::playMusic(const std::string& name, bool loop)
     m_currentMusic->Play(loop);
 }
 
+//---------------------------------------------------------------------------
+//! BGM を停止します
+//---------------------------------------------------------------------------
 void AudioManager::stopMusic()
 {
     if (m_currentMusic)
@@ -322,8 +371,13 @@ void AudioManager::stopMusic()
     }
 }
 
-// === 音量 ===
+//===========================================================================
+// 音量
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! マスター音量を設定し、再生中のBGMへ即時反映します
+//---------------------------------------------------------------------------
 void AudioManager::setMasterVolume(float volume)
 {
     m_masterVolume = std::max(0.0f, std::min(1.0f, volume));

@@ -62,8 +62,8 @@ struct ImportedTextureData
 struct ImportedModelNode
 {
     std::string name;
-    DirectX::SimpleMath::Matrix localTransform = DirectX::SimpleMath::Matrix::Identity;
-    DirectX::SimpleMath::Vector3 position = DirectX::SimpleMath::Vector3::Zero;
+    DirectX::SimpleMath::Matrix modelTransform = DirectX::SimpleMath::Matrix::Identity;
+    DirectX::SimpleMath::Vector3 modelPosition = DirectX::SimpleMath::Vector3::Zero;
     uint32_t meshCount = 0;
 };
 

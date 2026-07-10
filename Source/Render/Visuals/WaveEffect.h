@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   WaveEffect.h
+//! @brief  波エフェクト (波形シェーダーの発光面)
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "DeviceResources.h"
 
@@ -6,23 +10,35 @@
 
 struct SceneContext;
 
-class ArenaFloor
+//===========================================================================
+//! 波エフェクト
+//! 波形シェーダー (PS_WaveWorld) を流す装飾用の発光面。
+//! 現状はボス戦の背景 (Z 固定の垂直平面) だが、他の形状にも使える想定
+//===========================================================================
+class WaveEffect
 {
 public:
-    ArenaFloor(SceneContext& context);
-    ~ArenaFloor() = default;
+    WaveEffect(SceneContext& context);
+    ~WaveEffect() = default;
 
     void initialize();
     void finalize();
+
+    //! 波形アニメーションの時間を進めます
     void update(float deltaTime);
+
     void render(const DirectX::SimpleMath::Matrix& view,
                 const DirectX::SimpleMath::Matrix& projection);
 
+    //! 配置を設定します (回転は度)
     void setTransform(
         const DirectX::SimpleMath::Vector3& position,
         const DirectX::SimpleMath::Vector3& rotationDegrees,
         const DirectX::SimpleMath::Vector3& scale);
+
+    //! 平面の幅を設定します (initialize より前に呼ぶこと — 頂点生成に使う)
     void setSize(float size) { m_size = size; }
+
     void setSpeed(float speed) { m_speed = speed; }
     void setBrightness(float b) { m_brightness = b; }
     void setAlpha(float a) { m_alpha = a; }
@@ -33,7 +49,7 @@ private:
         DirectX::XMFLOAT3 position;
     };
 
-    struct ArenaFloorCB
+    struct WaveEffectCB
     {
         DirectX::XMFLOAT4X4 worldViewProjection;
         float time;

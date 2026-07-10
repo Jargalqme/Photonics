@@ -1,13 +1,24 @@
-﻿#pragma once
+﻿//---------------------------------------------------------------------------
+//! @file   RenderCommandQueue.h
+//! @brief  描画コマンドキュー
+//---------------------------------------------------------------------------
+#pragma once
 
 #include "Render/Pipeline/RenderCommand.h"
 
 #include <vector>
 
+//===========================================================================
+//! 描画コマンドキュー
+//! シーンが submit したコマンドを不透明/半透明バケットに振り分けて保持する
+//! (毎フレーム clear -> submit -> 描画側がバケット単位で消費)
+//===========================================================================
 class RenderCommandQueue
 {
 public:
 	void clear();
+
+	//! blendMode で振り分けて積みます (Billboard は常に半透明)
 	void submit(const MeshCommand& command);
 	void submit(const BillboardCommand& command);
 	void submit(const ImportedModelCommand& command);

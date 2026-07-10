@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   Tracers.cpp
+//! @brief  トレーサー (ヒットスキャンの光条)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Visuals/Tracers.h"
 
 #include "DeviceResources.h"
@@ -11,12 +15,12 @@ using namespace DirectX::SimpleMath;
 
 namespace
 {
-	constexpr float  TRACER_LIFETIME = 0.120f;
-	constexpr float  TRACER_WIDTH = 0.075f;
-	constexpr float  TRACER_NUDGE_FORWARD = 0.35f;
-	constexpr float  TRACER_MIN_SEGMENT_LENGTH = 14.0f;
-	constexpr float  TRACER_MAX_SEGMENT_LENGTH = 58.0f;
-	constexpr float  TRACER_SEGMENT_FRACTION = 0.38f;
+	constexpr float  TRACER_LIFETIME = 0.120f;              //!< 走り切るまでの秒数
+	constexpr float  TRACER_WIDTH = 0.075f;                 //!< ビーム幅
+	constexpr float  TRACER_NUDGE_FORWARD = 0.35f;          //!< 始点を前へ押し出す距離 (銃口めり込み回避)
+	constexpr float  TRACER_MIN_SEGMENT_LENGTH = 14.0f;     //!< 可視セグメントの最短
+	constexpr float  TRACER_MAX_SEGMENT_LENGTH = 58.0f;     //!< 可視セグメントの最長
+	constexpr float  TRACER_SEGMENT_FRACTION = 0.38f;       //!< 全長に対するセグメント割合
 	constexpr size_t TRACER_RESERVE = 16;
 }
 
@@ -44,6 +48,9 @@ void Tracers::finalize()
 	m_tracers.clear();
 }
 
+//---------------------------------------------------------------------------
+//! トレーサーを生成します (始点は進行方向へ少し押し出す)
+//---------------------------------------------------------------------------
 void Tracers::spawn(const Vector3& start, const Vector3& end, const Vector4& color)
 {
 	Vector3 toEnd = end - start;
@@ -58,6 +65,9 @@ void Tracers::spawn(const Vector3& start, const Vector3& end, const Vector4& col
 	m_tracers.push_back(Tracer{ nudgedStart, end, color, 1.0f, true });
 }
 
+//---------------------------------------------------------------------------
+//! 減衰と消滅 (生成されたフレームは fresh フラグで1回スキップ)
+//---------------------------------------------------------------------------
 void Tracers::update(float deltaTime)
 {
 	const float decay = deltaTime / TRACER_LIFETIME;
@@ -78,6 +88,9 @@ void Tracers::update(float deltaTime)
 	});
 }
 
+//---------------------------------------------------------------------------
+//! 進行度から可視セグメントを切り出し、1本ずつ CB を更新して描画します
+//---------------------------------------------------------------------------
 void Tracers::render(const Matrix& view, const Matrix& projection, const Vector3& cameraPos)
 {
 	if (m_tracers.empty())

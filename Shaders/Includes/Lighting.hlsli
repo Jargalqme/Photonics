@@ -1,7 +1,7 @@
 #ifndef LIGHTING_HLSLI
 #define LIGHTING_HLSLI
 
-#include "../BRDF.hlsli"
+#include "BRDF.hlsli"
 
 struct DirectionalLightData
 {

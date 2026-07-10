@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+﻿//---------------------------------------------------------------------------
+//! @file   MenuBackground.cpp
+//! @brief  メニュー背景 (フルスクリーンシェーダー演出)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Render/Visuals/MenuBackground.h"
 #include "Render/Pipeline/RenderUtil.h"
 
@@ -6,8 +10,9 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 using Microsoft::WRL::ComPtr;
 
-// === 生成 ===
-
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 MenuBackground::MenuBackground(DX::DeviceResources* deviceResources)
     : m_deviceResources(deviceResources)
     , m_time(0.0f)
@@ -15,7 +20,9 @@ MenuBackground::MenuBackground(DX::DeviceResources* deviceResources)
 {
 }
 
-// === 初期化 ===
+//===========================================================================
+// 初期化
+//===========================================================================
 
 void MenuBackground::initialize()
 {
@@ -23,15 +30,17 @@ void MenuBackground::initialize()
     createDeviceDependentResources();
 }
 
-// === 更新 ===
-
+//---------------------------------------------------------------------------
+//! シェーダーアニメーションの時間を進めます
+//---------------------------------------------------------------------------
 void MenuBackground::update(float deltaTime)
 {
     m_time += deltaTime;
 }
 
-// === フルスクリーン四角形生成 ===
-
+//---------------------------------------------------------------------------
+//! フルスクリーン四角形の頂点を生成します
+//---------------------------------------------------------------------------
 void MenuBackground::createFullscreenQuad()
 {
     m_vertices.clear();
@@ -49,8 +58,9 @@ void MenuBackground::createFullscreenQuad()
     m_vertexCount = m_vertices.size();
 }
 
-// === デバイス依存リソース生成 ===
-
+//---------------------------------------------------------------------------
+//! バッファ・シェーダー・描画ステートを構築します
+//---------------------------------------------------------------------------
 void MenuBackground::createDeviceDependentResources()
 {
     auto device = m_deviceResources->GetD3DDevice();
@@ -98,8 +108,9 @@ void MenuBackground::createDeviceDependentResources()
     DX::ThrowIfFailed(device->CreateRasterizerState(&rsDesc, m_rasterizerState.ReleaseAndGetAddressOf()));
 }
 
-// === シェーダー読み込み ===
-
+//---------------------------------------------------------------------------
+//! VS + 3種の PS を読み込みます
+//---------------------------------------------------------------------------
 void MenuBackground::createShaders()
 {
     auto device = m_deviceResources->GetD3DDevice();
@@ -133,8 +144,13 @@ void MenuBackground::createShaders()
     ));
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 選択中のシェーダーでフルスクリーン描画します
+//---------------------------------------------------------------------------
 void MenuBackground::render(int width, int height)
 {
     auto context = m_deviceResources->GetD3DDeviceContext();
@@ -200,8 +216,9 @@ void MenuBackground::setShaderType(ShaderType type)
     m_shaderType = type;
 }
 
-// === デバイスロスト処理 ===
-
+//---------------------------------------------------------------------------
+//! GPUリソースを解放します (finalize 相当)
+//---------------------------------------------------------------------------
 void MenuBackground::onDeviceLost()
 {
     m_vertexBuffer.Reset();
