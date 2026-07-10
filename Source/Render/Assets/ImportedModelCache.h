@@ -10,7 +10,7 @@
 class ImportedModelCache
 {
 public:
-    void initialize(ID3D11Device* device);
+    void initialize(ID3D11Device* device, ID3D11DeviceContext* context);
     void finalize();
 
     const ImportedModel* get(const std::string& path);
@@ -23,5 +23,6 @@ public:
 
 private:
     ID3D11Device* m_device = nullptr;
+    ID3D11DeviceContext* m_context = nullptr;
     std::unordered_map<std::string, std::unique_ptr<ImportedModel>> m_models;
 };

@@ -13,6 +13,7 @@ namespace
 
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateCompressedTextureSRV(
         ID3D11Device* device,
+        ID3D11DeviceContext* context,
         const ImportedTextureData& texture)
     {
         Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
@@ -31,8 +32,11 @@ namespace
                 loadFlags | DirectX::WIC_LOADER_FORCE_RGBA32);
         }
 
+        // context + SRV out param => the loader builds the full mip chain via GenerateMips
+        // (not thread-safe with a context; fine while loading stays on the game thread)
         const HRESULT hr = DirectX::CreateWICTextureFromMemoryEx(
             device,
+            context,
             texture.bytes.data(),
             texture.bytes.size(),
             0,
@@ -107,7 +111,7 @@ namespace
     }
 }
 
-bool ImportedModel::initialize(ID3D11Device* device, ImportedModelData data)
+bool ImportedModel::initialize(ID3D11Device* device, ID3D11DeviceContext* context, ImportedModelData data)
 {
     finalize();
 
@@ -131,13 +135,17 @@ bool ImportedModel::initialize(ID3D11Device* device, ImportedModelData data)
         device,
         data.indices.data(),
         static_cast<UINT>(data.indices.size()));
+    if (!m_vertexBuffer || !m_indexBuffer)
+    {
+        return false;
+    }
 
     m_textureSRVs.resize(data.textures.size());
     for (size_t i = 0; i < data.textures.size(); ++i)
     {
         const ImportedTextureData& texture = data.textures[i];
         m_textureSRVs[i] = texture.compressed
-            ? CreateCompressedTextureSRV(device, texture)
+            ? CreateCompressedTextureSRV(device, context, texture)
             : CreateRawTextureSRV(device, texture);
     }
 

@@ -11,6 +11,7 @@ Texture2D    MetalRoughTexture : register(t2);
 TextureCube  IrradianceCube    : register(t3);
 Texture2D    MetalnessTexture  : register(t4);
 Texture2D    AOTexture         : register(t5);
+Texture2D    EmissiveTexture   : register(t6);
 SamplerState BaseColorSampler  : register(s0);
 
 cbuffer ImportedModelCB : register(b0)
@@ -25,6 +26,7 @@ cbuffer ImportedModelCB : register(b0)
     float4   MaterialParams;
     float4   MaterialFlags;
     float4   MaterialFlags2;
+    float4   EmissiveFactor;   // rgb: emissiveColor * strength, w: has emissive map
 };
 
 struct PS_INPUT
@@ -106,8 +108,15 @@ float4 main(PS_INPUT input) : SV_TARGET
     float ambientIntensity = LightDirectionAndAmbient.w;
     float3 ambient = irradiance * albedo * (1.0 - metallic) * ao * ambientIntensity;
     
-    float  emissive = MaterialFlags.y;
-    float3 color    = Lo + ambient + albedo * emissive;
+    // --- material emissive (glTF): own radiance, NOT tinted by albedo ---
+    float3 emissiveMat = EmissiveFactor.rgb;
+    if (EmissiveFactor.w > 0.5)
+    {
+        emissiveMat *= EmissiveTexture.Sample(BaseColorSampler, input.texCoord).rgb; // sRGB -> linear
+    }
+
+    float  emissive = MaterialFlags.y;   // per-command tint glow (gameplay)
+    float3 color    = Lo + ambient + albedo * emissive + emissiveMat;
 
     return float4(color, base.a); // linear HDR; ACES tonemapper finishes it
 }

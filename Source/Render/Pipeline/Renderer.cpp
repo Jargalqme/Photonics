@@ -28,6 +28,7 @@ namespace
         Vector4 materialParams;
         Vector4 materialFlags;
         Vector4 materialFlags2;
+        Vector4 emissiveFactor;   // rgb: emissiveColor * strength, w: has emissive map
     };
 
     static_assert((sizeof(ImportedModelCB) % 16) == 0);
@@ -428,6 +429,7 @@ void Renderer::DrawImportedModelCommand(
         cb.materialFlags = Vector4(0.0f, command.emissiveIntensity, 0.0f, 0.0f);
         cb.materialFlags2 = Vector4::Zero;
         cb.materialParams = Vector4(0.0f, 1.0f, 0.0f, 0.0f);   // metallic 0, rough 1, no maps
+        cb.emissiveFactor = Vector4::Zero;
 
         ID3D11ShaderResourceView* nullSRVs[3] = { nullptr, nullptr, nullptr };
         context->PSSetShaderResources(0, 3, nullSRVs);
@@ -457,6 +459,8 @@ void Renderer::DrawImportedModelCommand(
         int32_t slot2TextureIndex = IMPORTED_TEXTURE_NONE;
         int32_t metalnessIndex = IMPORTED_TEXTURE_NONE;
         int32_t aoIndex = IMPORTED_TEXTURE_NONE;
+        int32_t emissiveIndex = IMPORTED_TEXTURE_NONE;
+        Vector4 emissiveFactor = Vector4::Zero;
         bool slot2IsStandaloneRoughness = false;
 
         const auto& materials = model.materials();
@@ -468,6 +472,12 @@ void Renderer::DrawImportedModelCommand(
             normalIndex = mat.normalTextureIndex;
             metalnessIndex = mat.metalnessTextureIndex;
             aoIndex = mat.ambientOcclusionTextureIndex;
+            emissiveIndex = mat.emissiveTextureIndex;
+            emissiveFactor = Vector4(
+                mat.emissiveColor.x * mat.emissiveIntensity,
+                mat.emissiveColor.y * mat.emissiveIntensity,
+                mat.emissiveColor.z * mat.emissiveIntensity,
+                0.0f);
 
             if (mat.metallicRoughnessTextureIndex != IMPORTED_TEXTURE_NONE)
             {
@@ -485,6 +495,7 @@ void Renderer::DrawImportedModelCommand(
         ID3D11ShaderResourceView* slot2SRV = model.textureSRV(slot2TextureIndex);
         ID3D11ShaderResourceView* metalnessSRV = model.textureSRV(metalnessIndex);
         ID3D11ShaderResourceView* aoSRV = model.textureSRV(aoIndex);
+        ID3D11ShaderResourceView* emissiveSRV = model.textureSRV(emissiveIndex);
 
         cb.materialFlags = Vector4(
             baseColorSRV ? 1.0f : 0.0f,
@@ -504,18 +515,22 @@ void Renderer::DrawImportedModelCommand(
             normalSRV ? 1.0f : 0.0f,
             slot2SRV ? 1.0f : 0.0f);
 
+        emissiveFactor.w = emissiveSRV ? 1.0f : 0.0f;
+        cb.emissiveFactor = emissiveFactor;
+
         ID3D11ShaderResourceView* srvs[3] = { baseColorSRV, normalSRV, slot2SRV };
         context->PSSetShaderResources(0, 3, srvs);
         context->PSSetShaderResources(4, 1, &metalnessSRV);
         context->PSSetShaderResources(5, 1, &aoSRV);
+        context->PSSetShaderResources(6, 1, &emissiveSRV);
 
         RenderUtil::updateDynamicConstantBuffer(context, m_importedModelConstantBuffer, cb);
 
         context->DrawIndexed(submesh.indexCount, submesh.startIndex, 0);
     }
 
-    ID3D11ShaderResourceView* nullSRVs[6] = {};
-    context->PSSetShaderResources(0, 6, nullSRVs);
+    ID3D11ShaderResourceView* nullSRVs[7] = {};
+    context->PSSetShaderResources(0, 7, nullSRVs);
     context->RSSetState(nullptr);
 }
 

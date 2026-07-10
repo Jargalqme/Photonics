@@ -1,6 +1,7 @@
-﻿//=============================================================================
-// @brief Typed deferred gameplay event bus.
-//=============================================================================
+//---------------------------------------------------------------------------
+//! @file   EventBus.h
+//! @brief  型付き遅延イベントバス
+//---------------------------------------------------------------------------
 #pragma once
 
 #include "Gameplay/EventTypes.h"
@@ -11,12 +12,18 @@
 #include <variant>
 #include <vector>
 
+//===========================================================================
+//! 型付き遅延イベントバス (static)
+//! publish は積むだけ -> シーンが dispatchQueued で一括配信。
+//! 配信中に積まれたイベントは次回配信、配信中の subscribe は配信後に有効化
+//===========================================================================
 class EventBus
 {
 public:
     template <typename EventT>
     using Callback = std::function<void(const EventT&)>;
 
+    //! 購読を登録します (配信中はイテレータ無効化を避けるため保留リストへ)
     template <typename EventT>
     static void subscribe(Callback<EventT> callback)
     {
@@ -29,16 +36,21 @@ public:
         listeners<EventT>().push_back(std::move(callback));
     }
 
+    //! イベントを積みます (即時配信ではない)
     template <typename EventT>
     static void publish(const EventT& event)
     {
         enqueue(Event{ event });
     }
 
+    //! 積まれたイベントを一括配信します (フレームに1回呼ぶ)
     static void dispatchQueued();
+
+    //! 全キュー・全購読を破棄します (シーン遷移時)
     static void clear();
 
 private:
+    //! 対応イベント一覧 (追加時は listeners / pendingListeners の分岐と .cpp の実体定義にも追加)
     using Event = std::variant<
         DummyHitEvent,
         DummyDiedEvent,
@@ -49,13 +61,14 @@ private:
         ShotResolvedEvent,
         WaveChangedEvent>;
 
-    static constexpr size_t SOFT_WARNING_THRESHOLD = 1000;
-    static constexpr size_t HARD_EVENT_CAP = 10000;
+    static constexpr size_t SOFT_WARNING_THRESHOLD = 1000;     //!< 超過で警告ログ (詰まりの早期発見)
+    static constexpr size_t HARD_EVENT_CAP = 10000;            //!< 超過でイベント破棄 (暴走ガード)
 
     static void enqueue(Event event);
     static void dispatch(const Event& event);
     static void activatePendingSubscribers();
 
+    //! イベント型 -> 対応するリスナー配列へのマップ (コンパイル時分岐)
     template <typename EventT>
     static std::vector<Callback<EventT>>& listeners()
     {
@@ -97,6 +110,7 @@ private:
         }
     }
 
+    //! listeners() の保留リスト版 (配信中の subscribe 先)
     template <typename EventT>
     static std::vector<Callback<EventT>>& pendingListeners()
     {
@@ -138,6 +152,7 @@ private:
         }
     }
 
+    //! 型が確定したイベントを全リスナーへ配ります
     template <typename EventT>
     static void dispatchTyped(const EventT& event)
     {
@@ -147,9 +162,9 @@ private:
         }
     }
 
-    static bool m_isDispatching;
-    static std::vector<Event> m_currentQueue;
-    static std::vector<Event> m_nextQueue;
+    static bool m_isDispatching;                //!< 配信中フラグ (この間の publish/subscribe は保留扱い)
+    static std::vector<Event> m_currentQueue;   //!< 次の dispatchQueued で配信する分
+    static std::vector<Event> m_nextQueue;      //!< 配信中に積まれた分 (次回へ持ち越し)
 
     static std::vector<Callback<DummyHitEvent>> m_dummyHitListeners;
     static std::vector<Callback<DummyDiedEvent>> m_dummyDiedListeners;

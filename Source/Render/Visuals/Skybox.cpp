@@ -22,12 +22,12 @@ void Skybox::initialize()
     // 6面テクスチャ読み込み
     // DX11キューブ面順序: +X(右), -X(左), +Y(上), -Y(下), +Z(前), -Z(後)
     const wchar_t* faceFiles[6] = {
-        L"Assets/Textures/skybox_red_right.png",
-        L"Assets/Textures/skybox_red_left.png",
-        L"Assets/Textures/skybox_red_top.png",
-        L"Assets/Textures/skybox_red_bottom.png",
-        L"Assets/Textures/skybox_red_front.png",
-        L"Assets/Textures/skybox_red_back.png",
+        L"Assets/Textures/skybox_cyan_right.png",
+        L"Assets/Textures/skybox_cyan_left.png",
+        L"Assets/Textures/skybox_cyan_top.png",
+        L"Assets/Textures/skybox_cyan_bottom.png",
+        L"Assets/Textures/skybox_cyan_front.png",
+        L"Assets/Textures/skybox_cyan_back.png",
     };
 
     ComPtr<ID3D11Texture2D> faceTextures[6];

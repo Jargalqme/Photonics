@@ -33,15 +33,17 @@ namespace
     }
 }
 
-void ImportedModelCache::initialize(ID3D11Device* device)
+void ImportedModelCache::initialize(ID3D11Device* device, ID3D11DeviceContext* context)
 {
     m_device = device;
+    m_context = context;
 }
 
 void ImportedModelCache::finalize()
 {
     m_models.clear();
     m_device = nullptr;
+    m_context = nullptr;
 }
 
 const ImportedModel* ImportedModelCache::get(const std::string& path)
@@ -66,7 +68,7 @@ const ImportedModel* ImportedModelCache::get(const std::string& path)
     }
 
     auto model = std::make_unique<ImportedModel>();
-    if (!model->initialize(m_device, std::move(data)))
+    if (!model->initialize(m_device, m_context, std::move(data)))
     {
         TraceLine("[ImportedModelCache] Failed to create GPU buffers for " + path);
         return nullptr;
@@ -139,7 +141,7 @@ const ImportedModel* ImportedModelCache::getWithAmbientCGMaterial(
     }
 
     auto model = std::make_unique<ImportedModel>();
-    if (!model->initialize(m_device, std::move(data)))
+    if (!model->initialize(m_device, m_context, std::move(data)))
     {
         TraceLine("[ImportedModelCache] Failed to create GPU buffers for "
             + path
@@ -195,7 +197,7 @@ const ImportedModel* ImportedModelCache::getPBRBoxWithAmbientCGMaterial(
     }
 
     auto model = std::make_unique<ImportedModel>();
-    if (!model->initialize(m_device, std::move(data)))
+    if (!model->initialize(m_device, m_context, std::move(data)))
     {
         TraceLine("[ImportedModelCache] Failed to create GPU buffers for generated PBR box with ambientCG material "
             + materialDirectory.generic_string());

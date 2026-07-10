@@ -1,16 +1,26 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   BossAttackManager.cpp
+//! @brief  ボス攻撃パターン管理 (行動チェイン)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/BossAttackManager.h"
 #include "Gameplay/BulletPool.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+//---------------------------------------------------------------------------
+//! プールを接続しフェーズ1のチェインを構築します
+//---------------------------------------------------------------------------
 void BossAttackManager::initialize(BulletPool* pool)
 {
     m_bulletPool = pool;
     setPhase(1);
 }
 
+//---------------------------------------------------------------------------
+//! フェーズに応じた行動チェインへ差し替えます (先頭の予告から仕切り直し)
+//---------------------------------------------------------------------------
 void BossAttackManager::setPhase(int phase)
 {
     m_chain = buildChainForPhase(phase);
@@ -19,9 +29,12 @@ void BossAttackManager::setPhase(int phase)
     m_stageTimer = m_chain.empty() ? 0.0f : m_chain[0].telegraphDuration;
 }
 
+//---------------------------------------------------------------------------
+//! バースト連射のティック + 行動チェインのステージ進行
+//---------------------------------------------------------------------------
 void BossAttackManager::update(float deltaTime)
 {
-    // バースト連射のチク
+    // バースト連射のティック (チェインとは独立して進む)
     if (m_burstActive)
     {
         m_burstTimer -= deltaTime;
@@ -52,6 +65,7 @@ void BossAttackManager::update(float deltaTime)
         return;
     }
 
+    // 予告 -> 攻撃 -> 隙 -> 次の手 (循環)
     const Maneuver& m = m_chain[m_chainIndex];
     switch (m_stage)
     {
@@ -74,6 +88,9 @@ void BossAttackManager::update(float deltaTime)
     }
 }
 
+//---------------------------------------------------------------------------
+//! パターンに対応する発射メソッドへ振り分け
+//---------------------------------------------------------------------------
 void BossAttackManager::firePattern(Pattern p)
 {
     switch (p)
@@ -84,6 +101,9 @@ void BossAttackManager::firePattern(Pattern p)
     }
 }
 
+//---------------------------------------------------------------------------
+//! Attack ステージの長さを取得します
+//---------------------------------------------------------------------------
 float BossAttackManager::attackDurationFor(Pattern p) const
 {
     switch (p)
@@ -91,16 +111,19 @@ float BossAttackManager::attackDurationFor(Pattern p) const
     case Pattern::Burst: return BURST_BULLET_COUNT * BURST_INTERVAL;  // 連射の長さ
     case Pattern::Rain:
     case Pattern::Torus:
-    default:             return 0.0f;                                 // 一括スポーン — 即次へ
+    default:             return 0.0f;                                 // 一括スポーン - 即次へ
     }
 }
 
+//---------------------------------------------------------------------------
+//! フェーズ別の行動チェインを構築します
+//---------------------------------------------------------------------------
 std::vector<BossAttackManager::Maneuver>
 BossAttackManager::buildChainForPhase(int phase) const
 {
     switch (phase)
     {
-    case 1:  // 単発ずつ — プレイヤーがリズムを学ぶ
+    case 1:  // 単発ずつ - プレイヤーがリズムを学ぶ
         return {
             { Pattern::Rain,  1.5f, 2.0f },
             { Pattern::Burst, 0.8f, 1.5f },
@@ -121,6 +144,9 @@ BossAttackManager::buildChainForPhase(int phase) const
     return {};
 }
 
+//---------------------------------------------------------------------------
+//! フォーリングレイン: 展開速度の異なる3リングを頭上に発生させます
+//---------------------------------------------------------------------------
 void BossAttackManager::fireRain()
 {
     if (!m_bulletPool)
@@ -133,6 +159,9 @@ void BossAttackManager::fireRain()
     fireRainRing(RAIN_RING_COUNT, RAIN_EXPAND_FAST, 0.6f);
 }
 
+//---------------------------------------------------------------------------
+//! レイン1リング分: 横展開で発射し、一定時間後に落下へ切り替え予約
+//---------------------------------------------------------------------------
 void BossAttackManager::fireRainRing(int count, float expandSpeed, float angleOffset)
 {
     Vector3 spawnPos = m_position + Vector3(0.0f, RAIN_SPAWN_HEIGHT, 0.0f);
@@ -157,6 +186,7 @@ void BossAttackManager::fireRainRing(int count, float expandSpeed, float angleOf
 
         if (bullet)
         {
+            // 落下方向にわずかな横成分を残す -> 真下ではなく外へ流れる
             Vector3 fallDir = expandDir * RAIN_FALL_SPREAD;
             fallDir.y = -1.0f;
             fallDir.Normalize();
@@ -166,6 +196,9 @@ void BossAttackManager::fireRainRing(int count, float expandSpeed, float angleOf
     }
 }
 
+//---------------------------------------------------------------------------
+//! エイムバースト開始: 以降の発射は update のティックが行う
+//---------------------------------------------------------------------------
 void BossAttackManager::fireAimedBurst()
 {
     m_burstActive = true;
@@ -173,6 +206,9 @@ void BossAttackManager::fireAimedBurst()
     m_burstTimer = 0.0f;  // 最初の弾は即発射
 }
 
+//---------------------------------------------------------------------------
+//! バースト1発: 発射時点のプレイヤー位置へ向けて撃つ (偏差なし)
+//---------------------------------------------------------------------------
 void BossAttackManager::fireBurstBullet()
 {
     if (!m_bulletPool || !m_playerTarget)
@@ -193,6 +229,9 @@ void BossAttackManager::fireBurstBullet()
     );
 }
 
+//---------------------------------------------------------------------------
+//! トーラス: 地表付近から全方位へ水平リングを放ちます
+//---------------------------------------------------------------------------
 void BossAttackManager::fireTorus()
 {
     if (!m_bulletPool)

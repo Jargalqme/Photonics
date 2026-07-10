@@ -357,6 +357,19 @@ namespace
                         std::clamp(static_cast<float>(roughness), 0.0f, 1.0f);
                 }
 
+                aiColor4D emissiveColor;
+                if (aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emissiveColor) == AI_SUCCESS)
+                {
+                    importedMaterial.emissiveColor = ToColor(emissiveColor);
+                }
+
+                // KHR_materials_emissive_strength; intentionally not clamped above 1 (HDR)
+                ai_real emissiveIntensity = importedMaterial.emissiveIntensity;
+                if (aiGetMaterialFloat(material, AI_MATKEY_EMISSIVE_INTENSITY, &emissiveIntensity) == AI_SUCCESS)
+                {
+                    importedMaterial.emissiveIntensity =
+                        std::max(static_cast<float>(emissiveIntensity), 0.0f);
+                }
 
                 aiString normalPath;
                 if (material->GetTexture(aiTextureType_NORMALS, 0, &normalPath) == AI_SUCCESS)
@@ -387,6 +400,24 @@ namespace
                     importedMaterial.roughnessTextureIndex = roughnessTextureIndex;
                 }
 
+                aiString emissivePath;
+                if (material->GetTexture(aiTextureType_EMISSIVE, 0, &emissivePath) == AI_SUCCESS)
+                {
+                    importedMaterial.emissiveTextureIndex = ResolveTextureIndex(
+                        ToString(emissivePath), modelDirectory, outData,
+                        /*srgb*/ true, textureIndexByPath);
+                }
+
+                // glTF occlusionTexture arrives as LIGHTMAP ("aka Ambient Occlusion");
+                // AMBIENT_OCCLUSION covers importers that use the newer PBR slot
+                aiString occlusionPath;
+                if (material->GetTexture(aiTextureType_LIGHTMAP, 0, &occlusionPath) == AI_SUCCESS ||
+                    material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &occlusionPath) == AI_SUCCESS)
+                {
+                    importedMaterial.ambientOcclusionTextureIndex = ResolveTextureIndex(
+                        ToString(occlusionPath), modelDirectory, outData,
+                        /*srgb*/ false, textureIndexByPath);
+                }
             }
 
             outData.materials.push_back(std::move(importedMaterial));

@@ -1,6 +1,7 @@
-﻿//=============================================================================
-// @brief Typed deferred gameplay event bus implementation.
-//=============================================================================
+//---------------------------------------------------------------------------
+//! @file   EventBus.cpp
+//! @brief  型付き遅延イベントバス
+//---------------------------------------------------------------------------
 #include "pch.h"
 #include "Gameplay/EventBus.h"
 
@@ -28,6 +29,10 @@ std::vector<EventBus::Callback<WeaponShotEvent>> EventBus::m_pendingWeaponShotLi
 std::vector<EventBus::Callback<ShotResolvedEvent>> EventBus::m_pendingShotResolvedListeners;
 std::vector<EventBus::Callback<WaveChangedEvent>> EventBus::m_pendingWaveChangedListeners;
 
+//---------------------------------------------------------------------------
+//! キューへ追加します (配信中は次回用キューへ)
+//! ソフト閾値で警告ログ、ハード上限で破棄 (publish ループの暴走ガード)
+//---------------------------------------------------------------------------
 void EventBus::enqueue(Event event)
 {
     auto& targetQueue = m_isDispatching ? m_nextQueue : m_currentQueue;
@@ -50,6 +55,10 @@ void EventBus::enqueue(Event event)
     targetQueue.push_back(std::move(event));
 }
 
+//---------------------------------------------------------------------------
+//! 積まれたイベントを一括配信します
+//! swap してから回す -> 配信中の publish が走査中のキューに触れない
+//---------------------------------------------------------------------------
 void EventBus::dispatchQueued()
 {
     std::vector<Event> eventsToDispatch;
@@ -64,6 +73,7 @@ void EventBus::dispatchQueued()
 
     activatePendingSubscribers();
 
+    // 配信中に積まれた分を次回配信へ持ち越す
     if (!m_nextQueue.empty())
     {
         m_currentQueue.insert(
@@ -74,6 +84,9 @@ void EventBus::dispatchQueued()
     }
 }
 
+//---------------------------------------------------------------------------
+//! variant から実際の型を復元して配信します
+//---------------------------------------------------------------------------
 void EventBus::dispatch(const Event& event)
 {
     std::visit([](const auto& typedEvent)
@@ -82,6 +95,9 @@ void EventBus::dispatch(const Event& event)
     }, event);
 }
 
+//---------------------------------------------------------------------------
+//! 配信中に登録された購読を有効化します
+//---------------------------------------------------------------------------
 void EventBus::activatePendingSubscribers()
 {
     auto activate = [](auto& active, auto& pending)
@@ -103,6 +119,9 @@ void EventBus::activatePendingSubscribers()
     activate(m_waveChangedListeners, m_pendingWaveChangedListeners);
 }
 
+//---------------------------------------------------------------------------
+//! 全キュー・全購読を破棄します (シーン遷移時)
+//---------------------------------------------------------------------------
 void EventBus::clear()
 {
     m_isDispatching = false;

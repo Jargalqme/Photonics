@@ -63,7 +63,9 @@ void Game::Initialize(HWND window, int width, int height)
 
     m_shaders->initialize(m_deviceResources->GetD3DDevice());
     m_meshes->initialize(m_deviceResources->GetD3DDeviceContext());
-    m_importedModels->initialize(m_deviceResources->GetD3DDevice());
+    m_importedModels->initialize(
+        m_deviceResources->GetD3DDevice(),
+        m_deviceResources->GetD3DDeviceContext());
     m_commonStates = std::make_unique<CommonStates>(m_deviceResources->GetD3DDevice());
 
     // シーンへ配るサービス参照（すべて非所有）

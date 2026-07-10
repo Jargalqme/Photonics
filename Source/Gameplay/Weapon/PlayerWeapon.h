@@ -51,7 +51,7 @@ public:
     void resetRifleModelSettings() { m_model.resetRifleSettings(); }
 
 private:
-    static constexpr const char* RIFLE_MODEL_PATH = "Assets/Weapons/Rifle/pistol.glb";
+    static constexpr const char* RIFLE_MODEL_PATH = "Assets/Weapons/Rifle/scifi2.glb";
 
     void applyInputToCombat(const PlayerWeaponFrame& frame);
     WeaponMotionInput buildMotionInput(const PlayerWeaponFrame& frame) const;

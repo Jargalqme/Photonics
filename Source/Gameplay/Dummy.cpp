@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   Dummy.cpp
+//! @brief  射撃練習用ダミー (トレーニングシーン)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/Dummy.h"
 #include "Gameplay/EventBus.h"
 #include "Gameplay/EventTypes.h"
@@ -10,16 +14,25 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+//---------------------------------------------------------------------------
+//! コンストラクタ (spawn までは非アクティブ)
+//---------------------------------------------------------------------------
 Dummy::Dummy(SceneContext& context)
     : m_context(&context)
 {
     m_active = false;
 }
 
+//---------------------------------------------------------------------------
+//! 初期化 (ライフサイクル統一のため存在・現状は空)
+//---------------------------------------------------------------------------
 void Dummy::initialize()
 {
 }
 
+//---------------------------------------------------------------------------
+//! 指定位置に出現させます (mesh 省略時は共有キューブ)
+//---------------------------------------------------------------------------
 void Dummy::spawn(const Vector3& startPos, DirectX::GeometricPrimitive* mesh)
 {
     m_mesh = mesh ? mesh : m_context->meshes->getCube();
@@ -33,6 +46,9 @@ void Dummy::spawn(const Vector3& startPos, DirectX::GeometricPrimitive* mesh)
     m_active = true;
 }
 
+//---------------------------------------------------------------------------
+//! リスポーン待ち or 被弾フラッシュの減衰
+//---------------------------------------------------------------------------
 void Dummy::update(float deltaTime)
 {
     if (!m_active)
@@ -60,6 +76,9 @@ void Dummy::update(float deltaTime)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 縦長キューブを人型サイズで積む
+//---------------------------------------------------------------------------
 void Dummy::submitRender(RenderCommandQueue& queue) const
 {
     if (!m_active || !m_mesh)
@@ -69,6 +88,7 @@ void Dummy::submitRender(RenderCommandQueue& queue) const
 
     MeshCommand command;
     command.mesh = m_mesh;
+    // 高さ 2.2 の中心を +1.1 -> 足元基準で地面に立つ
     command.world =
         Matrix::CreateScale(1.5f, 2.2f, 1.0f) *
         Matrix::CreateTranslation(m_transform.position + Vector3(0.0f, 1.1f, 0.0f));
@@ -77,8 +97,13 @@ void Dummy::submitRender(RenderCommandQueue& queue) const
     queue.submit(command);
 }
 
-// === ICombatTarget ===
+//===========================================================================
+// ICombatTarget
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! 非アクティブ中はコライダを積まない = 撃てない
+//---------------------------------------------------------------------------
 void Dummy::collectHitColliders(std::vector<CombatHitCollider>& out)
 {
     if (!m_active)
@@ -86,7 +111,7 @@ void Dummy::collectHitColliders(std::vector<CombatHitCollider>& out)
         return;
     }
 
-    // ボディ — 被弾領域
+    // ボディ - 被弾領域
     CombatHitCollider c;
     c.target = this;
     c.part = HitPart::Body;
@@ -99,6 +124,9 @@ void Dummy::collectHitColliders(std::vector<CombatHitCollider>& out)
     out.push_back(c);
 }
 
+//---------------------------------------------------------------------------
+//! 被弾フラッシュ + 体力減算。死亡でリスポーン予約とイベント発行
+//---------------------------------------------------------------------------
 void Dummy::onHit(const CombatHit& hit)
 {
     if (!m_active)
@@ -120,6 +148,9 @@ void Dummy::onHit(const CombatHit& hit)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 同じ位置に復活します
+//---------------------------------------------------------------------------
 void Dummy::respawn()
 {
     m_transform.position = m_spawnPosition;
@@ -130,6 +161,9 @@ void Dummy::respawn()
     m_active = true;
 }
 
+//---------------------------------------------------------------------------
+//! 共有メッシュへの参照を手放します (所有は MeshCache)
+//---------------------------------------------------------------------------
 void Dummy::finalize()
 {
     m_mesh = nullptr;

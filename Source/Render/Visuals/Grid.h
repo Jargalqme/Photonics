@@ -47,10 +47,10 @@ private:
     SceneContext* m_context;
 
     // === グリッドパラメータ ===
-    static constexpr float GRID_SIZE     = 500.0f;
+    static constexpr float GRID_SIZE     = 200.0f;
     static constexpr float FLOOR_Y       = -1.0f;
     static constexpr float WALL_HEIGHT   = 199.5f;
-    static constexpr float WALL_DISTANCE = 200.0f;
+    static constexpr float WALL_DISTANCE = 50.0f;
 
     float m_gridSize = GRID_SIZE;
     float m_lineWidthX = 0.015f;
@@ -60,7 +60,7 @@ private:
     float m_lineEmissiveIntensity = 2.0f;
 
     // エレクトリックブルー (#0066FF) + オービットネイビー (#0A1024)
-    DirectX::SimpleMath::Color m_lineColor{ 1.0f, 0.0f, 0.21f, 1.0f };
+    DirectX::SimpleMath::Color m_lineColor{ 1.0f, 0.0f, 0.2f, 1.0f };
     DirectX::SimpleMath::Color m_baseColor{ 0.0f, 0.0f, 0.0f, 1.0f };
     DirectX::SimpleMath::Color m_finalColor{ 0.0f, 0.0f, 0.0f, 1.0f };
 

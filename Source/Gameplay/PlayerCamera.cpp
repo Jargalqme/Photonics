@@ -1,7 +1,14 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file	PlayerCamera.cpp
+//! @brief	プレイヤーカメラ (追従・エイムFOV・シェイク・ビューモデル投影)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "PlayerCamera.h"
 #include "Gameplay/Player.h"
 
+//---------------------------------------------------------------------------
+//! コンストラクタ (ノイズ初期化 + ビューモデル投影の構築)
+//---------------------------------------------------------------------------
 PlayerCamera::PlayerCamera(DX::DeviceResources* deviceResources)
 	: Camera(deviceResources)
 {
@@ -11,18 +18,23 @@ PlayerCamera::PlayerCamera(DX::DeviceResources* deviceResources)
 	updateViewmodelProjection();
 }
 
+//---------------------------------------------------------------------------
+//! 視点追従 -> FOV ブレンド -> シェイク -> 行列再構築
+//---------------------------------------------------------------------------
 void PlayerCamera::update(const Player& player, float deltaTime)
 {
 	setRotation(player.lookPitch(), player.lookYaw());
 
 	const float targetFov = player.isAiming() ? m_adsFov : m_hipFov;
 
+	// 指数ブレンド (フレームレート非依存の近似)
 	const float blend = std::clamp(m_fovBlendSpeed * deltaTime, 0.0f, 1.0f);
 	m_currentFov += (targetFov - m_currentFov) * blend;
 
 	setPosition(player.eyePosition());
 	m_fovy = XMConvertToRadians(m_currentFov);
 
+	// シェイク成分を先に確定させる (Camera::update 内の updateViewMatrix が消費)
 	updateShake(deltaTime);
 
 	Camera::update();
@@ -30,6 +42,9 @@ void PlayerCamera::update(const Player& player, float deltaTime)
 	updateViewmodelProjection();
 }
 
+//---------------------------------------------------------------------------
+//! シェイクを開始 (継続中なら強度を半分加算し、時間を延長)
+//---------------------------------------------------------------------------
 void PlayerCamera::triggerShake(float intensity, float duration) noexcept
 {
 	if (m_shakeTimer < m_shakeDuration)
@@ -45,6 +60,9 @@ void PlayerCamera::triggerShake(float intensity, float duration) noexcept
 	}
 }
 
+//---------------------------------------------------------------------------
+//! シェイクの回転・オフセットを乗せて LookAt ビューを構築 (override)
+//---------------------------------------------------------------------------
 void PlayerCamera::updateViewMatrix() noexcept
 {
 	const Vector3 eyePos = m_position + Vector3(m_shakeOffsetX, m_shakeOffsetY, m_shakeOffsetZ);
@@ -58,7 +76,7 @@ void PlayerCamera::updateViewMatrix() noexcept
 			XMConvertToRadians(m_shakeYaw),
 			XMConvertToRadians(m_shakePitch),
 			XMConvertToRadians(m_shakeRoll));
-		
+
 		forward = Vector3::TransformNormal(forward, rotation);
 		up = Vector3::TransformNormal(up, rotation);
 	}
@@ -67,6 +85,9 @@ void PlayerCamera::updateViewMatrix() noexcept
 	m_matView = XMMatrixLookAtLH(eyePos, target, up);
 }
 
+//---------------------------------------------------------------------------
+//! ビューモデル専用投影を再構築 (FOV 固定 -> ADS でも銃が拡大しない)
+//---------------------------------------------------------------------------
 void PlayerCamera::updateViewmodelProjection() noexcept
 {
 	m_matViewmodelProj = XMMatrixPerspectiveFovLH(
@@ -76,6 +97,9 @@ void PlayerCamera::updateViewmodelProjection() noexcept
 		VIEWMODEL_FAR);
 }
 
+//---------------------------------------------------------------------------
+//! シェイク成分を算出 (2次減衰、チャンネルごとに異なる y でノイズを分離)
+//---------------------------------------------------------------------------
 void PlayerCamera::updateShake(float deltaTime) noexcept
 {
 	if (m_shakeTimer < m_shakeDuration)

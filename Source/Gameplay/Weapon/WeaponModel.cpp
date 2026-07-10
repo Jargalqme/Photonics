@@ -122,7 +122,7 @@ Vector3 WeaponModel::getMuzzleLocalPosition() const
 {
     if (m_importedRifle)
     {
-        if (const ImportedModelNode* muzzle = m_importedRifle->findNamedNode("VM_Muzzle"))
+        if (const ImportedModelNode* muzzle = m_importedRifle->findNamedNode("VM_MuzzlePoint"))
         {
             return muzzle->position;
         }

@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   Boss.cpp
+//! @brief  ボス (3フェーズ移動 + 攻撃管理)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/Boss.h"
 #include "Gameplay/BulletPool.h"
 #include "Gameplay/EventBus.h"
@@ -6,14 +10,22 @@
 #include "Gameplay/PlayerCamera.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Services/SceneContext.h"
+#include "Render/Assets/ImportedModel.h"
+#include "Render/Assets/ImportedModelCache.h"
 #include "Render/Assets/MeshCache.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
+#include <limits>
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
-// === 生成・初期化 ===
+//===========================================================================
+// 生成・初期化
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! コンストラクタ
+//---------------------------------------------------------------------------
 Boss::Boss(SceneContext& context)
     : m_context(&context)
     , m_skull(context)
@@ -24,12 +36,18 @@ Boss::Boss(SceneContext& context)
 {
 }
 
+//---------------------------------------------------------------------------
+//! メッシュ・ビルボードを構築します
+//---------------------------------------------------------------------------
 void Boss::initialize()
 {
-    // 攻撃側の初期化は activate() で行う — この時点ではプール未接続（setBulletPool 前）
+    // 攻撃側の初期化は activate() で行う - この時点ではプール未接続 (setBulletPool 前)
     buildBoss();
 }
 
+//---------------------------------------------------------------------------
+//! 見た目のメッシュを MeshCache / ImportedModelCache から借用します
+//---------------------------------------------------------------------------
 void Boss::buildBoss()
 {
     MeshCache* meshes = m_context->meshes;
@@ -39,11 +57,43 @@ void Boss::buildBoss()
     m_innerRingMesh = meshes->getTorus(3.2f, 0.18f, 64);
 
 #ifdef _DEBUG
-    m_debugSphere = meshes->getSphere(16);         // unit (diameter=1)；submitRender() で 2*radius 倍
+    m_debugSphere = meshes->getSphere(16);         // unit (diameter=1); submitRender() で 2*radius 倍
 #endif
     m_skull.initialize(GetAssetPath(L"Textures/skull.png"));
+
+    // 頭部モデル + ambientCG マテリアル (キャッシュ所有・借用)
+    // ロード失敗時は m_headModel == nullptr のままビルボードにフォールバックする
+    if (m_context->importedModels)
+    {
+        m_headModel = m_context->importedModels->getWithAmbientCGMaterial(
+            HEAD_MODEL_PATH, HEAD_MATERIAL_DIR);
+    }
+
+    if (m_headModel)
+    {
+        // 原点が首元にあるため、頂点からバウンディングボックスを求めて中心と縮尺を出す
+        const float maxFloat = std::numeric_limits<float>::max();
+        Vector3 minBounds(maxFloat, maxFloat, maxFloat);
+        Vector3 maxBounds(-maxFloat, -maxFloat, -maxFloat);
+        for (const auto& vertex : m_headModel->data().vertices)
+        {
+            minBounds = Vector3::Min(minBounds, vertex.position);
+            maxBounds = Vector3::Max(maxBounds, vertex.position);
+        }
+        m_headCenter = (minBounds + maxBounds) * 0.5f;
+        const Vector3 size = maxBounds - minBounds;
+        m_headLongestSide = std::max({ size.x, size.y, size.z, 0.001f });
+
+        // 目の発光位置 (Blender で置いた Empty、モデル空間)
+        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_L")) { m_eyeLocalL = eye->position; }
+        if (const ImportedModelNode* eye = m_headModel->findNamedNode("Eye_R")) { m_eyeLocalR = eye->position; }
+    }
 }
 
+//---------------------------------------------------------------------------
+//! 戦闘を開始します (setBulletPool / setPlayerTarget の後に呼ぶこと)
+//! 攻撃マネージャとフェーズFSMはここで構築する
+//---------------------------------------------------------------------------
 void Boss::activate()
 {
     m_transform.position = Vector3(P1_ORBIT_RADIUS, P1_HEIGHT, 0.0f);
@@ -65,6 +115,7 @@ void Boss::activate()
         [this](float dt) {updatePhase1(dt); },
         nullptr);
 
+    // フェーズ2/3 は突入時 (onEnter) にパーティクル + カメラシェイクで変化を通知
     m_phaseFSM.addState(BossPhase::phase2,
         [this]()
         {
@@ -104,8 +155,13 @@ void Boss::activate()
     m_phaseFSM.changeState(BossPhase::phase1);
 }
 
-// === ICombatTarget ===
+//===========================================================================
+// ICombatTarget
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! ボディ + スカル弱点の2球を積む (未アクティブ・死亡中は積まない)
+//---------------------------------------------------------------------------
 void Boss::collectHitColliders(std::vector<CombatHitCollider>& out)
 {
     if (!m_activated || isDead())
@@ -113,7 +169,7 @@ void Boss::collectHitColliders(std::vector<CombatHitCollider>& out)
         return;
     }
 
-    // ボディ — 軌道リング + コアを覆う大きなスフィア
+    // ボディ - 軌道リング + コアを覆う大きなスフィア
     {
         CombatHitCollider c;
         c.target = this;
@@ -127,7 +183,7 @@ void Boss::collectHitColliders(std::vector<CombatHitCollider>& out)
         out.push_back(c);
     }
 
-    // スカル弱点 — ボディの上に浮いている小さなスフィア（2倍ダメージ）
+    // スカル弱点 - ボディの上に浮いている小さなスフィア (2倍ダメージ)
     {
         CombatHitCollider c;
         c.target = this;
@@ -142,6 +198,9 @@ void Boss::collectHitColliders(std::vector<CombatHitCollider>& out)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 被弾フラッシュ + 体力減算。死亡で BossDiedEvent 発行
+//---------------------------------------------------------------------------
 void Boss::onHit(const CombatHit& hit)
 {
     if (!m_activated || isDead())
@@ -166,8 +225,13 @@ void Boss::onHit(const CombatHit& hit)
     }
 }
 
-// === 更新 ===
+//===========================================================================
+// 更新
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! フラッシュ減衰 -> フェーズ判定 -> FSM -> 攻撃更新
+//---------------------------------------------------------------------------
 void Boss::update(float deltaTime)
 {
     if (!m_activated || isDead())
@@ -184,6 +248,7 @@ void Boss::update(float deltaTime)
         m_hitFlashTimer -= deltaTime;
     }
 
+    // phase3 を先に判定 -> HP が一気に落ちた場合は 2 を飛ばして 3 へ入る
     float hp = m_health / m_maxHealth;
     auto current = m_phaseFSM.getCurrentState();
     if (hp <= PHASE3_HP_THRESHOLD && current != BossPhase::phase3)
@@ -201,18 +266,23 @@ void Boss::update(float deltaTime)
     m_attacks.update(deltaTime);
 }
 
+//---------------------------------------------------------------------------
+//! フェーズ1: 一定高度で中心周りをゆっくり周回
+//---------------------------------------------------------------------------
 void Boss::updatePhase1(float dt)
 {
-    // 一定高度で中心周りをゆっくり周回
     m_moveAngle += P1_ORBIT_SPEED * dt;
     m_transform.position.x = cosf(m_moveAngle) * P1_ORBIT_RADIUS;
     m_transform.position.z = sinf(m_moveAngle) * P1_ORBIT_RADIUS;
     m_transform.position.y = P1_HEIGHT;
 }
 
+//---------------------------------------------------------------------------
+//! フェーズ2: 速い軌道 + 垂直バウンド
+//! プレイヤーは XZ 追跡に加え Y 成分も読む必要がある
+//---------------------------------------------------------------------------
 void Boss::updatePhase2(float dt)
 {
-    // 速い軌道 + 垂直バウンド — プレイヤーは XZ 追跡に加え Y 成分も読む必要がある
     m_moveAngle += P2_ORBIT_SPEED * dt;
     m_bobPhase  += P2_BOB_SPEED   * dt;
     m_transform.position.x = cosf(m_moveAngle) * P2_ORBIT_RADIUS;
@@ -220,9 +290,11 @@ void Boss::updatePhase2(float dt)
     m_transform.position.y = P2_BASE_HEIGHT + sinf(m_bobPhase) * P2_BOB_AMPLITUDE;
 }
 
+//---------------------------------------------------------------------------
+//! フェーズ3: ホールド -> ランダム再配置 -> ダッシュ補間 (予測困難化)
+//---------------------------------------------------------------------------
 void Boss::updatePhase3(float dt)
 {
-    // ホールド → ランダム再配置 → ダッシュ補間 — 予測困難化
     m_dashTimer -= dt;
     if (m_dashTimer <= 0.0f)
     {
@@ -239,13 +311,18 @@ void Boss::updatePhase3(float dt)
         m_dashTimer = P3_DASH_INTERVAL;
     }
 
-    // 指数減衰補間 — 最初は速く、目標に近づくと減速
+    // 指数減衰補間 - 最初は速く、目標に近づくと減速
     float t = std::min(P3_DASH_LERP * dt, 1.0f);
     m_transform.position = Vector3::Lerp(m_transform.position, m_dashTarget, t);
 }
 
-// === 描画 ===
+//===========================================================================
+// 描画
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! コア球 + 2リング + 頭部モデル + 目の発光球 (+ _DEBUG 判定球) を積む
+//---------------------------------------------------------------------------
 void Boss::submitRender(RenderCommandQueue& queue) const
 {
     if (!m_activated)
@@ -278,6 +355,7 @@ void Boss::submitRender(RenderCommandQueue& queue) const
 
     Matrix world = Matrix::CreateTranslation(m_transform.position);
 
+    // 被弾フラッシュはコア・リングの色をオレンジへ寄せる
     Color coreColor = Color(0.8f, 0.8f, 0.8f);
     Color ringColor = Color(0.4f, 0.0f, 1.0f);
     const Color energyColor(0.0f, 0.85f, 1.0f);
@@ -296,6 +374,7 @@ void Boss::submitRender(RenderCommandQueue& queue) const
         BlendMode::Opaque,
         0.8f);
 
+    // 2つのリングは逆方向・異速度で回して有機的に見せる
     submitMesh(m_outerringMesh,
         Matrix::CreateRotationX(0.35f) *
         Matrix::CreateRotationY(m_ringOrbitAngle) *
@@ -316,6 +395,7 @@ void Boss::submitRender(RenderCommandQueue& queue) const
         3.5f);
 
 #ifdef _DEBUG
+    // 判定球の可視化 (ワイヤーフレーム半透明)
     const Vector3 weakPointPosition = m_transform.position + Vector3(0, SKULL_OFFSET_Y, 0);
 
     submitMesh(
@@ -335,22 +415,88 @@ void Boss::submitRender(RenderCommandQueue& queue) const
         BlendMode::AlphaBlend);
 #endif
 
-    BillboardCommand billboard;
-    billboard.billboard = &m_skull;
-    billboard.position = m_transform.position + Vector3(0, SKULL_OFFSET_Y, 0);
-    billboard.size = SKULL_SIZE;
-    queue.submit(billboard);
+    const Vector3 headPosition = m_transform.position + Vector3(0, SKULL_OFFSET_Y, 0);
+
+    if (m_headModel)
+    {
+        // プレイヤーの方向へヨー回転 (モデル前方は取込後 -Z なので HEAD_YAW_OFFSET で補正)
+        float yaw = HEAD_YAW_OFFSET;
+        if (m_playerTarget)
+        {
+            const Vector3 toPlayer = *m_playerTarget - m_transform.position;
+            yaw += atan2f(toPlayer.x, toPlayer.z);
+        }
+
+        // 「中心を原点へ -> ゲームサイズへ縮小 -> プレイヤーへ向ける -> 定位置へ」の順
+        const float scale = HEAD_TARGET_HEIGHT / m_headLongestSide;
+        const Matrix headWorld =
+            Matrix::CreateTranslation(-m_headCenter) *
+            Matrix::CreateScale(scale) *
+            Matrix::CreateRotationY(yaw) *
+            Matrix::CreateTranslation(headPosition);
+
+        ImportedModelCommand head;
+        head.model = m_headModel;
+        head.world = headWorld;
+        head.color = Color(1.0f, 1.0f, 1.0f);
+        if (m_hitFlashTimer > 0.0f)
+        {
+            const float t = m_hitFlashTimer / HIT_FLASH_DURATION;
+            head.color = Color::Lerp(head.color, Color(1.0f, 0.6f, 0.0f), t);
+            head.emissiveIntensity = t * 2.0f;
+        }
+        queue.submit(head);
+
+        // 目の発光 - フェーズで色が変わるゲームプレイシグナル
+        Color eyeColor(0.0f, 0.85f, 1.0f);
+        switch (m_phaseFSM.getCurrentState())
+        {
+        case BossPhase::phase2: eyeColor = Color(1.0f, 0.5f, 0.0f);  break;
+        case BossPhase::phase3: eyeColor = Color(1.0f, 0.1f, 0.05f); break;
+        default: break;
+        }
+
+        if (m_eyeLocalL != Vector3::Zero)
+        {
+            const Vector3 eyeWorld = Vector3::Transform(m_eyeLocalL, headWorld);
+            submitMesh(m_coreMesh,
+                Matrix::CreateScale(EYE_GLOW_RADIUS * 2.0f) * Matrix::CreateTranslation(eyeWorld),
+                eyeColor, false, BlendMode::Additive, EYE_EMISSIVE);
+        }
+        if (m_eyeLocalR != Vector3::Zero)
+        {
+            const Vector3 eyeWorld = Vector3::Transform(m_eyeLocalR, headWorld);
+            submitMesh(m_coreMesh,
+                Matrix::CreateScale(EYE_GLOW_RADIUS * 2.0f) * Matrix::CreateTranslation(eyeWorld),
+                eyeColor, false, BlendMode::Additive, EYE_EMISSIVE);
+        }
+    }
+    else
+    {
+        // モデル未ロード時のフォールバック
+        BillboardCommand billboard;
+        billboard.billboard = &m_skull;
+        billboard.position = headPosition;
+        billboard.size = SKULL_SIZE;
+        queue.submit(billboard);
+    }
 }
 
-// === 終了処理 ===
+//===========================================================================
+// 終了処理
+//===========================================================================
 
+//---------------------------------------------------------------------------
+//! ビルボードを解放し、借用ポインタを切り離します
+//---------------------------------------------------------------------------
 void Boss::finalize()
 {
     m_skull.finalize();
-    // 借用ポインタを nullptr 化（実体は MeshCache が所有）
+    // 借用ポインタを nullptr 化 (実体は MeshCache / ImportedModelCache が所有)
     m_coreMesh = nullptr;
     m_outerringMesh = nullptr;
     m_innerRingMesh = nullptr;
+    m_headModel = nullptr;
 #ifdef _DEBUG
     m_debugSphere = nullptr;
 #endif

@@ -14,11 +14,14 @@ namespace
 
 	std::filesystem::path FindTextureFile(const std::filesystem::path& directory, const char* name)
 	{
-		const std::filesystem::path jpg = directory / (std::string(name) + ".jpg");
-
-		if (std::filesystem::exists(jpg))
+		// PNG first: lossless beats JPG block artifacts, especially on normal/roughness data
+		for (const char* extension : { ".png", ".jpg" })
 		{
-			return jpg;
+			const std::filesystem::path candidate = directory / (std::string(name) + extension);
+			if (std::filesystem::exists(candidate))
+			{
+				return candidate;
+			}
 		}
 
 		return {};
@@ -55,9 +58,19 @@ namespace
 			return IMPORTED_TEXTURE_NONE;
 		}
 
+		// The same set is applied to every material slot of a model; share one copy
+		const std::string source = path.generic_string();
+		for (size_t i = 0; i < data.textures.size(); ++i)
+		{
+			if (data.textures[i].source == source)
+			{
+				return static_cast<int32_t>(i);
+			}
+		}
+
 		ImportedTextureData texture;
 		texture.name = path.filename().generic_string();
-		texture.source = path.generic_string();
+		texture.source = source;
 		texture.formatHint = path.extension().string();
 		texture.compressed = true;
 		texture.srgb = srgb;
@@ -102,7 +115,9 @@ bool PBRMaterialLoader::ApplyAmbientCGTextureSet(
 		return false;
 	}
 
-	const int32_t colorIndex = AppendTexture(data, colorPath, true, false);
+	// forceRGBA32: 16-bit PNGs have no sRGB DXGI format; without the conversion the
+	// color map would silently load linear (washed-out albedo)
+	const int32_t colorIndex = AppendTexture(data, colorPath, true, true);
 	const int32_t normalIndex = AppendTexture(data, normalPath, false, true);
 	const int32_t roughnessIndex = AppendTexture(data, roughnessPath, false, true);
 

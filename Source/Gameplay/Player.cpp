@@ -1,4 +1,8 @@
-﻿#include "pch.h"
+//---------------------------------------------------------------------------
+//! @file   Player.cpp
+//! @brief  プレイヤー (FPS視点・移動・体力)
+//---------------------------------------------------------------------------
+#include "pch.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/EventBus.h"
 #include "Gameplay/EventTypes.h"
@@ -11,6 +15,9 @@ using namespace DirectX::SimpleMath;
 
 namespace
 {
+    //---------------------------------------------------------------------------
+    //! WASD を移動入力へ変換 (y = 前後, x = 左右)
+    //---------------------------------------------------------------------------
     Vector2 playerReadMoveInput(const InputManager& input)
     {
         Vector2 move = Vector2::Zero;
@@ -35,6 +42,9 @@ namespace
         return move;
     }
 
+    //---------------------------------------------------------------------------
+    //! 視線基準の水平移動方向を合成
+    //---------------------------------------------------------------------------
     Vector3 playerMovementDirection(Player& player, const Vector2& move)
     {
         Vector3 moveForward = player.lookForward();
@@ -49,6 +59,9 @@ namespace
     }
 }
 
+//---------------------------------------------------------------------------
+//! コンストラクタ (武器を生成)
+//---------------------------------------------------------------------------
 Player::Player(SceneContext& context)
     : m_weapon(std::make_unique<PlayerWeapon>(context))
 {
@@ -56,11 +69,18 @@ Player::Player(SceneContext& context)
 
 Player::~Player() = default;
 
+//---------------------------------------------------------------------------
+//! 武器を初期化します
+//---------------------------------------------------------------------------
 void Player::initialize()
 {
     m_weapon->initialize();
 }
 
+//---------------------------------------------------------------------------
+//! 視点差分を適用 (ヨーは 0-360 で循環、ピッチはクランプ)
+//! 戻り値 = 実際に適用された差分 (武器スウェイ入力用)
+//---------------------------------------------------------------------------
 Vector2 Player::applyLookDelta(float deltaYaw, float deltaPitch)
 {
     const float previousPitch = m_lookPitch;
@@ -76,6 +96,9 @@ Vector2 Player::applyLookDelta(float deltaYaw, float deltaPitch)
     return Vector2(deltaYaw, m_lookPitch - previousPitch);
 }
 
+//---------------------------------------------------------------------------
+//! 水平移動 + アリーナ境界クランプ
+//---------------------------------------------------------------------------
 void Player::updateMovement(const Vector3& direction, float deltaTime)
 {
     Vector3 moveDir = direction;
@@ -90,6 +113,9 @@ void Player::updateMovement(const Vector3& direction, float deltaTime)
     m_rootPosition.z = std::clamp(m_rootPosition.z, -ARENA_HALF_SIZE, ARENA_HALF_SIZE);
 }
 
+//---------------------------------------------------------------------------
+//! 入力 -> 視点 -> 移動 -> ジャンプ -> 武器の順で1フレーム分を反映
+//---------------------------------------------------------------------------
 void Player::update(InputManager& input, float deltaTime, std::vector<WeaponShot>& outShots)
 {
     const Vector2 mouseDelta = input.getMouseDelta();
@@ -127,22 +153,34 @@ void Player::update(InputManager& input, float deltaTime, std::vector<WeaponShot
     m_weapon->update(weaponFrame, outShots);
 }
 
+//---------------------------------------------------------------------------
+//! 押しっぱなし入力を解除します
+//---------------------------------------------------------------------------
 void Player::clearInputState()
 {
     m_weapon->clearInputState();
     setAiming(false);
 }
 
+//---------------------------------------------------------------------------
+//! 武器を取得します
+//---------------------------------------------------------------------------
 PlayerWeapon& Player::weapon()
 {
     return *m_weapon;
 }
 
+//---------------------------------------------------------------------------
+//! 武器を取得します (const版)
+//---------------------------------------------------------------------------
 const PlayerWeapon& Player::weapon() const
 {
     return *m_weapon;
 }
 
+//---------------------------------------------------------------------------
+//! 実移動距離から水平速度を算出します (前回位置を更新)
+//---------------------------------------------------------------------------
 float Player::movementSpeed(float deltaTime)
 {
     if (deltaTime <= 0.0f || m_speed <= 0.0f)
@@ -159,6 +197,9 @@ float Player::movementSpeed(float deltaTime)
     return delta.Length() / deltaTime;
 }
 
+//---------------------------------------------------------------------------
+//! 接地中のみジャンプ
+//---------------------------------------------------------------------------
 void Player::jump()
 {
     if (m_isGrounded)
@@ -168,6 +209,9 @@ void Player::jump()
     }
 }
 
+//---------------------------------------------------------------------------
+//! 無敵タイマーを減算
+//---------------------------------------------------------------------------
 void Player::updateInvincibility(float deltaTime)
 {
     if (m_invincibleTimer > 0.0f)
@@ -180,6 +224,9 @@ void Player::updateInvincibility(float deltaTime)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 重力による落下と着地判定
+//---------------------------------------------------------------------------
 void Player::updateVerticalMovement(float deltaTime)
 {
     if (!m_isGrounded)
@@ -196,6 +243,9 @@ void Player::updateVerticalMovement(float deltaTime)
     }
 }
 
+//---------------------------------------------------------------------------
+//! 死亡・無敵中はコライダを積まない = その間は被弾しない (無敵時間の実装)
+//---------------------------------------------------------------------------
 void Player::collectHitColliders(std::vector<CombatHitCollider>& out)
 {
     if (isDead() || isInvincible())
@@ -215,6 +265,9 @@ void Player::collectHitColliders(std::vector<CombatHitCollider>& out)
     out.push_back(c);
 }
 
+//---------------------------------------------------------------------------
+//! 被弾を体力へ反映し PlayerDamagedEvent を発行
+//---------------------------------------------------------------------------
 void Player::onHit(const CombatHit& hit)
 {
     if (isDead() || isInvincible())
@@ -230,6 +283,9 @@ void Player::onHit(const CombatHit& hit)
         m_maxHealth });
 }
 
+//---------------------------------------------------------------------------
+//! ダメージを適用し無敵時間を開始します
+//---------------------------------------------------------------------------
 void Player::takeDamage(float amount)
 {
     if (isInvincible())
@@ -246,11 +302,17 @@ void Player::takeDamage(float amount)
     m_invincibleTimer = INVINCIBLE_DURATION;
 }
 
+//---------------------------------------------------------------------------
+//! 武器を解放します
+//---------------------------------------------------------------------------
 void Player::finalize()
 {
     m_weapon->finalize();
 }
 
+//---------------------------------------------------------------------------
+//! 目線カメラのワールド行列を構築 (LookAt ビューの逆行列)
+//---------------------------------------------------------------------------
 Matrix Player::createGameplayCameraWorldMatrix() const
 {
     const Vector3 eyePos = eyePosition();
@@ -263,6 +325,9 @@ Matrix Player::createGameplayCameraWorldMatrix() const
     return view.Invert();
 }
 
+//---------------------------------------------------------------------------
+//! ヨー・ピッチから視線方向を算出 (正のピッチ = 下向き)
+//---------------------------------------------------------------------------
 Vector3 Player::lookForward() const
 {
     const float yawRad = XMConvertToRadians(m_lookYaw);
@@ -275,6 +340,9 @@ Vector3 Player::lookForward() const
     return forward;
 }
 
+//---------------------------------------------------------------------------
+//! 視線の右方向を算出 (worldUp と forward の外積 -> 常に水平)
+//---------------------------------------------------------------------------
 Vector3 Player::lookRight() const
 {
     const Vector3 worldUp(0.0f, 1.0f, 0.0f);
@@ -283,21 +351,33 @@ Vector3 Player::lookRight() const
     return right;
 }
 
+//---------------------------------------------------------------------------
+//! リロード中かを取得します
+//---------------------------------------------------------------------------
 bool Player::isReloading() const
 {
     return m_weapon->isReloading();
 }
 
+//---------------------------------------------------------------------------
+//! 残弾数を取得します
+//---------------------------------------------------------------------------
 int Player::ammo() const
 {
     return m_weapon->getAmmo();
 }
 
+//---------------------------------------------------------------------------
+//! 装弾数を取得します
+//---------------------------------------------------------------------------
 int Player::maxAmmo() const
 {
     return m_weapon->getMaxAmmo();
 }
 
+//---------------------------------------------------------------------------
+//! 開始状態へ戻します (位置・体力・視点・武器)
+//---------------------------------------------------------------------------
 void Player::reset()
 {
     m_rootPosition = Vector3(0.0f, 0.0f, -20.0f);

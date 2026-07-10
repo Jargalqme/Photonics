@@ -29,11 +29,13 @@ struct ImportedSubmesh
 struct ImportedMaterial
 {
     DirectX::SimpleMath::Color baseColor = DirectX::SimpleMath::Color(1.0f, 1.0f, 1.0f, 1.0f);
+    DirectX::SimpleMath::Color emissiveColor = DirectX::SimpleMath::Color(0.0f, 0.0f, 0.0f, 1.0f);
     std::string name;
     std::string baseColorTexture;
     std::string diffuseTexture;
     float metallicFactor  = 0.0f;
     float roughnessFactor = 1.0f;
+    float emissiveIntensity = 1.0f;   // KHR_materials_emissive_strength; may exceed 1 (HDR)
     int32_t baseColorTextureIndex         = IMPORTED_TEXTURE_NONE;
     int32_t normalTextureIndex            = IMPORTED_TEXTURE_NONE;
     int32_t metallicRoughnessTextureIndex = IMPORTED_TEXTURE_NONE;
@@ -41,6 +43,7 @@ struct ImportedMaterial
     int32_t metalnessTextureIndex         = IMPORTED_TEXTURE_NONE;
     int32_t ambientOcclusionTextureIndex  = IMPORTED_TEXTURE_NONE;
     int32_t heightTextureIndex            = IMPORTED_TEXTURE_NONE;
+    int32_t emissiveTextureIndex          = IMPORTED_TEXTURE_NONE;
 };
 
 struct ImportedTextureData
@@ -78,7 +81,7 @@ struct ImportedModelData
 class ImportedModel
 {
 public:
-    bool initialize(ID3D11Device* device, ImportedModelData data);
+    bool initialize(ID3D11Device* device, ID3D11DeviceContext* context, ImportedModelData data);
     void finalize();
 
     const ImportedModelData& data() const { return m_data; }

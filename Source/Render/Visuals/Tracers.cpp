@@ -120,7 +120,7 @@ void Tracers::render(const Matrix& view, const Matrix& projection, const Vector3
 			TRACER_MAX_SEGMENT_LENGTH);
 		const float segmentT = std::min(segmentLength / pathLength, 1.0f);
 		const float headT = std::clamp(progress + segmentT, 0.0f, 1.0f);
-		const float tailT = std::clamp(headT - segmentT, 0.0f, 1.0f);
+		const float tailT = std::clamp(progress, 0.0f, 1.0f);
 		const Vector3 segmentStart = Vector3::Lerp(tracer.start, tracer.end, tailT);
 		const Vector3 segmentEnd = Vector3::Lerp(tracer.start, tracer.end, headT);
 
