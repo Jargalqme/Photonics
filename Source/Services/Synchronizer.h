@@ -1,5 +1,5 @@
 ﻿//---------------------------------------------------------------------------
-//! @file   BeatTracker.h
+//! @file   Synchronizer.h
 //! @brief  音楽ビート追跡
 //---------------------------------------------------------------------------
 #pragma once
@@ -10,12 +10,12 @@
 //! BPM から拍タイミングを計算し、拍毎にコールバックを呼ぶ
 //! (音声解析ではなく時計ベース — 曲の BPM と開始ディレイを手動設定)
 //===========================================================================
-class BeatTracker
+class Synchronizer
 {
 public:
     using BeatCallback = std::function<void(int beat)>;
 
-    BeatTracker() = default;
+    Synchronizer() = default;
 
     //! 経過時間を進め、拍を跨いだ回数だけコールバックを発火
     void update(float deltaTime);

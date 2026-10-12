@@ -11,6 +11,7 @@
 #include "Gameplay/ICombatTarget.h"
 #include "Gameplay/CombatSystem.h"
 #include "Render/Visuals/Grid.h"
+#include "Render/Visuals/Cubemap.h"
 #include "Render/Assets/LayoutLoader.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
@@ -61,6 +62,9 @@ private:
     static constexpr float KILL_SHAKE_INTENSITY = 0.15f;
     static constexpr float KILL_SHAKE_DURATION  = 0.2f;
 
+    //! 戦闘結果を演出へ変換します (被弾パーティクル・シェイク・トレーサー)
+    void applyCombatFeedback(const CombatResults& results);
+
     SceneManager* m_sceneManager = nullptr;
 
     std::unique_ptr<PlayerCamera> m_camera;
@@ -77,6 +81,7 @@ private:
     std::unique_ptr<AudioManager> m_audioManager;
 
     std::unique_ptr<Grid> m_grid;
+    std::unique_ptr<Cubemap> m_cubemap;
     PrimitiveLayout m_environmentLayout;          //!< JSON レイアウトから読む静的環境
 
     std::unique_ptr<GameUI> m_gameUI;

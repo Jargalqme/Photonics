@@ -24,5 +24,5 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-    return DownsampleBox13Tap(sourceTexture, linearSampler, input.uv, texelSize);
+    return DownsampleBox13TapKaris(sourceTexture, linearSampler, input.uv, texelSize);
 }

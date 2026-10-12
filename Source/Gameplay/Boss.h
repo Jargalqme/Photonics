@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 //! @file   Boss.h
 //! @brief  ボス (3フェーズ移動 + 攻撃管理)
 //---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ public:
     //----------------------------------------------------------
     //!@{
 
-    //! メッシュ・ビルボードを構築します (攻撃側の初期化は activate() で)
+    //! メッシュ・ビルボード構築 + フェーズFSM登録 (攻撃側の初期化は activate() で)
     void initialize();
 
     //! フラッシュ減衰 -> フェーズ判定 -> FSM -> 攻撃更新
@@ -57,7 +57,7 @@ public:
     //! 戦闘を開始します (setBulletPool / setPlayerTarget の後に呼ぶこと)
     void activate();
 
-    void deactivate() { m_activated = false; m_active = false; }
+    void deactivate() { m_activated = false; }
     bool isActivated() const { return m_activated; }
 
     //!@}
@@ -80,8 +80,8 @@ public:
     //! ボディ + スカル弱点 (2倍ダメージ) の2球を積む
     void collectHitColliders(std::vector<CombatHitCollider>& out) override;
 
-    //! 被弾フラッシュ + 体力減算。死亡で BossDiedEvent 発行
-    void onHit(const CombatHit& hit) override;
+    //! 被弾フラッシュ + 体力減算 (演出・遷移はシーンが CombatResults から行う)
+    HitOutcome applyHit(const CombatHit& hit) override;
 
     //!@}
     //----------------------------------------------------------
@@ -126,14 +126,14 @@ private:
     // 頭部モデル描画パラメータ
     static constexpr const char* HEAD_MODEL_PATH   = "Assets/Characters/Boss/boss_head.glb";
     static constexpr const char* HEAD_MATERIAL_DIR = "Assets/Textures/PBR/Stone";
-    static constexpr float HEAD_TARGET_HEIGHT = 3.0f;              //!< 正規化後の頭の高さ (弱点判定球の直径に合わせる)
+    static constexpr float HEAD_TARGET_HEIGHT = 5.0f;              //!< 正規化後の頭の高さ (弱点判定球の直径に合わせる)
     static constexpr float HEAD_YAW_OFFSET    = DirectX::XM_PI;    //!< モデル前方補正 (glTF +Z が取込後 -Z を向くため)
     static constexpr float EYE_GLOW_RADIUS    = 0.15f;             //!< 目の発光球の半径
     static constexpr float EYE_EMISSIVE       = 4.0f;              //!< 目のブルーム発光倍率
 
     // 当たり判定コライダ (collectHitColliders で使用)
     static constexpr float BODY_RADIUS        = 2.4f;    //!< ボディ判定球
-    static constexpr float SKULL_RADIUS       = 1.5f;    //!< 弱点判定球
+    static constexpr float SKULL_RADIUS       = 2.5f;    //!< 弱点判定球
     static constexpr float WEAK_POINT_MULT    = 2.0f;    //!< 弱点ダメージ倍率
 
     // フェーズ1 - ゆっくり軌道
@@ -207,5 +207,4 @@ private:
 
     // 旧 GameObject 由来
     Transform m_transform;
-    bool m_active = true;
 };

@@ -4,8 +4,6 @@
 //---------------------------------------------------------------------------
 #include "pch.h"
 #include "Gameplay/Dummy.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 #include "GeometricPrimitive.h"
 #include "Render/Assets/MeshCache.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
@@ -125,27 +123,27 @@ void Dummy::collectHitColliders(std::vector<CombatHitCollider>& out)
 }
 
 //---------------------------------------------------------------------------
-//! 被弾フラッシュ + 体力減算。死亡でリスポーン予約とイベント発行
+//! 被弾フラッシュ + 体力減算。死亡でリスポーン予約 (演出はシーンが CombatResults から行う)
 //---------------------------------------------------------------------------
-void Dummy::onHit(const CombatHit& hit)
+HitOutcome Dummy::applyHit(const CombatHit& hit)
 {
     if (!m_active)
     {
-        return;
+        return HitOutcome::Ignored;
     }
 
     m_health -= hit.finalDamage;
     m_hitFlashTimer = HIT_FLASH_DURATION;
-
-    EventBus::publish(DummyHitEvent{ m_transform.position });
 
     if (m_health <= 0.0f)
     {
         m_health = 0.0f;
         m_active = false;
         m_respawnTimer = DEFAULT_RESPAWN_DELAY;
-        EventBus::publish(DummyDiedEvent{ m_transform.position });
+        return HitOutcome::Killed;
     }
+
+    return HitOutcome::Damaged;
 }
 
 //---------------------------------------------------------------------------

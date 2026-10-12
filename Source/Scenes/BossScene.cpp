@@ -6,14 +6,12 @@
 #include "Scenes/BossScene.h"
 #include "Gameplay/PlayerCamera.h"
 #include "DeviceResources.h"
-#include "Gameplay/EventBus.h"
 #include "Services/InputManager.h"
 #include "Render/Pipeline/Renderer.h"
 #include "Render/Pipeline/Bloom.h"
 #include "Render/Pipeline/SceneRenderer.h"
 #include "Render/Assets/MeshCache.h"
 #include "Gameplay/Weapon/WeaponShot.h"
-#include "Gameplay/EventTypes.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
 
 namespace
@@ -21,6 +19,8 @@ namespace
     constexpr const char* RIFLE_FIRE_GROUP = "rifle_fire";
     constexpr float RIFLE_FIRE_VOLUME = 0.35f;
     constexpr float RIFLE_FIRE_PITCH_JITTER = 0.015f;
+
+    const Vector4 PLAYER_TRACER_COLOR(2.0f, 4.25f, 5.0f, 1.0f);    //!< トレーサーのHDR色 (ブルームで発光)
 
     //---------------------------------------------------------------------------
     //! 発射音グループをロード (バリエーション不在時は単発SEへフォールバック)
@@ -106,11 +106,11 @@ void BossScene::initialize(SceneContext& context)
     m_audioManager->loadSound("death", GetAssetPath(L"Audio/death_sfx.wav").c_str());
     m_audioManager->loadMusic("Gameplay", GetAssetPath(L"Audio/sample.wav").c_str());
 
-    m_beatTracker = std::make_unique<BeatTracker>();
-    m_beatTracker->setBPM(109.0f);
-    m_beatTracker->setStartDelay(15.931f);
-    m_beatTracker->setSongDuration(115.0f);
-    m_beatTracker->setBeatCallback([this](int beat) {
+    m_synchronizer = std::make_unique<Synchronizer>();
+    m_synchronizer->setBPM(109.0f);
+    m_synchronizer->setStartDelay(15.931f);
+    m_synchronizer->setSongDuration(115.0f);
+    m_synchronizer->setBeatCallback([this](int beat) {
         onBeat(beat);
     });
 
@@ -137,7 +137,7 @@ void BossScene::initialize(SceneContext& context)
     // UI
     m_gameUI = std::make_unique<GameUI>();
     m_gameUI->initialize(m_deviceResources);  // m_deviceResources は Scene::initialize で設定済み
-    m_gameUI->setBeatTracker(m_beatTracker.get());
+    m_gameUI->setSynchronizer(m_synchronizer.get());
     m_gameUI->setPlayer(m_player.get());
     m_gameUI->setBoss(m_boss.get());
 
@@ -147,12 +147,38 @@ void BossScene::initialize(SceneContext& context)
     m_debugUI->setGrid(m_grid.get());
     m_debugUI->setCubemap(m_cubemap.get());
     m_debugUI->setAudioManager(m_audioManager.get());
-    m_debugUI->setBeatTracker(m_beatTracker.get());
+    m_debugUI->setSynchronizer(m_synchronizer.get());
     m_debugUI->setBulletPool(&m_bulletPool);
     m_debugUI->setBoss(m_boss.get());
     m_debugUI->setBloom(m_renderer->GetSceneRenderer()->getBloom());
     m_debugUI->setExposurePtr(m_camera->exposurePtr());
     m_debugUI->setSceneLighting(&m_lighting);
+
+    // バトルフロー FSM — 登録は一度きり。enter() が changeState(intro) でリセットする
+    m_battleFSM.addState(BattlePhase::intro,
+        [this]()
+        {
+            m_introTimer = 0.0f;
+            m_gameUI->setShowWaveIndicator(true);    // 中央上の "BOSS" バナー (wave==3)
+        },
+        [this](float dt) { updateIntro(dt); },
+        nullptr);
+
+    m_battleFSM.addState(BattlePhase::fight,
+        [this]() { m_gameUI->setShowWaveIndicator(false); },
+        [this](float dt) { updateFight(dt); },
+        nullptr);
+
+    // 勝敗は enter で遷移を1回だけ発火 (transitionTo はフェード完了まで遅延実行)
+    m_battleFSM.addState(BattlePhase::victory,
+        [this]() { m_sceneManager->transitionTo("Victory"); },
+        nullptr,
+        nullptr);
+
+    m_battleFSM.addState(BattlePhase::defeat,
+        [this]() { m_sceneManager->transitionTo("GameOver"); },
+        nullptr,
+        nullptr);
 }
 
 //===========================================================================
@@ -160,64 +186,16 @@ void BossScene::initialize(SceneContext& context)
 //===========================================================================
 
 //---------------------------------------------------------------------------
-//! イベント購読の再登録 + ゲーム状態リセット + ボス起動
-//! EventBus は exit で clear されるため、購読はここで毎回登録し直す
+//! ゲーム状態リセット + ボス起動
 //---------------------------------------------------------------------------
 void BossScene::enter()
 {
     Scene::enter();
-    EventBus::clear();
     m_debugMode = false;
     if (m_context && m_context->input)
     {
         m_context->input->setCursorVisible(false);
     }
-
-    // UI が自前で購読する（clear 後に再登録する必要があるためここで呼ぶ）
-    m_gameUI->subscribeEvents();
-
-    // 敵ヒット時 → 衝撃パーティクル
-    EventBus::subscribe<DummyHitEvent>([this](const DummyHitEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(1.0f, 0.8f, 0.2f, 1.0f),
-            IMPACT_PARTICLE_COUNT, IMPACT_PARTICLE_SPEED,
-            IMPACT_PARTICLE_LIFE, IMPACT_PARTICLE_SPREAD);
-    });
-
-    EventBus::subscribe<WeaponShotEvent>([this](const WeaponShotEvent&) {
-        m_audioManager->playRandomSound(RIFLE_FIRE_GROUP, RIFLE_FIRE_VOLUME, RIFLE_FIRE_PITCH_JITTER);
-    });
-
-    // ヒットスキャン解決時 → トレーサー描画
-    EventBus::subscribe<ShotResolvedEvent>([this](const ShotResolvedEvent& event) {
-        m_tracers->spawn(event.tracerStart, event.hitPoint, event.color);
-    });
-
-    // 敵撃破時 → 爆発パーティクル + シェイク + 効果音
-    EventBus::subscribe<DummyDiedEvent>([this](const DummyDiedEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(1.0f, 0.3f, 0.1f, 1.0f),
-            DEATH_PARTICLE_COUNT, DEATH_PARTICLE_SPEED,
-            DEATH_PARTICLE_LIFE, DEATH_PARTICLE_SPREAD);
-        m_camera->triggerShake(KILL_SHAKE_INTENSITY, KILL_SHAKE_DURATION);
-        m_audioManager->playSound("death", 0.2f);
-    });
-
-    EventBus::subscribe<PlayerDamagedEvent>([this](const PlayerDamagedEvent&) {
-        m_camera->triggerShake(PLAYER_HIT_SHAKE_INTENSITY, PLAYER_HIT_SHAKE_DURATION);
-    });
-
-    EventBus::subscribe<BossDamagedEvent>([this](const BossDamagedEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(0.8f, 0.0f, 1.0f, 1.0f),
-            BOSS_HIT_PARTICLE_COUNT, BOSS_HIT_PARTICLE_SPEED,
-            BOSS_HIT_PARTICLE_LIFE, BOSS_HIT_PARTICLE_SPREAD);
-    });
-
-    EventBus::subscribe<BossDiedEvent>([this](const BossDiedEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(0.8f, 0.0f, 1.0f, 1.0f),
-            BOSS_DEATH_PARTICLE_COUNT, BOSS_DEATH_PARTICLE_SPEED,
-            BOSS_DEATH_PARTICLE_LIFE, BOSS_DEATH_PARTICLE_SPREAD);
-        m_camera->triggerShake(BOSS_DEATH_SHAKE_INTENSITY, BOSS_DEATH_SHAKE_DURATION);
-        m_audioManager->playSound("death", 0.3f);
-    });
 
     // ゲーム状態リセット
     m_player->reset();
@@ -226,33 +204,33 @@ void BossScene::enter()
 
     m_bulletPool.deactivateAll();
 
-    // Boss starts directly; Stage 4 replaces this with the intro FSM.
     m_boss->setPlayerTarget(m_player->rootPositionPtr());
     m_boss->setBulletPool(&m_bulletPool);
     m_boss->activate();
-    EventBus::publish(WaveChangedEvent{ 3 });
+    m_gameUI->setWaveNumber(3);
 
     // ヒットスキャンターゲット構築 — Boss のみ（敵弾は Player へ直接解決）
     m_shotTargets.clear();
     m_shotTargets.push_back(m_boss.get());
 
     // オーディオリセット
-    m_beatTracker->reset();
+    m_synchronizer->reset();
     m_audioManager->playMusic("Gameplay");
 
     // ブルーム有効化（exit() で disable されるため毎エントリで再有効化）
     m_renderer->GetSceneRenderer()->getBloom()->setEnabled(true);
 
     m_renderer->GetSceneRenderer()->setActiveCamera(m_camera.get());
+
+    m_battleFSM.changeState(BattlePhase::intro);
 }
 
 //---------------------------------------------------------------------------
-//! 購読解除 + 音楽停止 + カメラ・ブルームを返却
+//! 音楽停止 + カメラ・ブルームを返却
 //---------------------------------------------------------------------------
 void BossScene::exit()
 {
     Scene::exit();
-    EventBus::clear();
     m_audioManager->stopMusic();
 
     if (m_renderer)
@@ -291,7 +269,7 @@ void BossScene::finalize()
     m_waveEffect.reset();
     m_cubemap.reset();
     m_indirectLight.reset();
-    m_beatTracker.reset();
+    m_synchronizer.reset();
     m_audioManager.reset();
     m_debugUI.reset();
 }
@@ -301,11 +279,11 @@ void BossScene::finalize()
 //===========================================================================
 
 //---------------------------------------------------------------------------
-//! 入力 -> ゲームプレイ系統 -> イベント配信 -> 勝敗遷移 -> カメラ -> サブシステム
+//! 入力 -> バトルフローFSM -> カメラ・サブシステム (フェーズ非依存の演出系)
 //---------------------------------------------------------------------------
 void BossScene::update(float deltaTime, InputManager* input)
 {
-    // === 入力 ===
+    // === 入力 (どのフェーズでも生きている) ===
     if (input->isKeyPressed(Keyboard::Keys::Escape))
     {
         PostQuitMessage(0);
@@ -328,62 +306,118 @@ void BossScene::update(float deltaTime, InputManager* input)
     }
 
     m_debugUI->setInputManager(input);
+    m_playerInputBlocked = m_debugMode || debugToggledThisFrame;
 
-    // === ゲームプレイ系統（正準順: Player → Boss → Combat → Camera）===
-    const bool victoryReached = m_boss->isActivated() && m_boss->isDead();
+    // === バトルフロー (ゲームプレイ系統はステート側が回す) ===
+    m_battleFSM.update(deltaTime);
 
-    // 1フレーム内の射撃インテントは Player 側で積み、Combat 側で解決して空にする
-    std::vector<WeaponShot> weaponShots;
-    if (!victoryReached)
-    {
-        if (!m_debugMode && !debugToggledThisFrame)
-        {
-            m_player->update(*input, deltaTime, weaponShots);
-        }
-
-        if (m_boss->isActivated())
-        {
-            m_boss->update(deltaTime);
-        }
-        m_bulletPool.update(deltaTime);
-        m_combatSystem.update(m_shotTargets, weaponShots);
-        m_combatSystem.resolveBullets(m_bulletPool, *m_player);
-    }
-
-    EventBus::dispatchQueued();
-
-    if (victoryReached)
-    {
-        m_sceneManager->transitionTo("Victory");
-        return;
-    }
-
-    if (m_player->isDead())
-    {
-        m_sceneManager->transitionTo("GameOver");
-        return;
-    }
-
+    // === カメラ + サブシステム (フェーズに依らず毎フレーム — 勝敗フェード中も演出は進む) ===
     m_camera->update(*m_player, deltaTime);
     m_camera->updateConstants();
 
-    // === サブシステム（UI / オーディオ / VFX / ワールド）===
     m_gameUI->update(deltaTime);
     m_audioManager->update();
     m_particleSystem->update(deltaTime);
     m_tracers->update(deltaTime);
-    m_beatTracker->update(deltaTime);
-    m_grid->setBeatPulse(m_beatTracker->getBeatProgress());
+    m_synchronizer->update(deltaTime);
+    m_grid->setBeatPulse(m_synchronizer->getBeatProgress());
     m_grid->update();
     m_waveEffect->update(deltaTime);
 }
 
 //---------------------------------------------------------------------------
-//! ビートコールバック (BeatTracker -> GameUI のフラッシュ)
+//! intro: バナー表示中はタイマーを進めるだけ (プレイヤー・ボスとも停止)
+//---------------------------------------------------------------------------
+void BossScene::updateIntro(float deltaTime)
+{
+    m_introTimer += deltaTime;
+    if (m_introTimer >= INTRO_DURATION)
+    {
+        m_battleFSM.changeState(BattlePhase::fight);
+    }
+}
+
+//---------------------------------------------------------------------------
+//! fight: ゲームプレイ系統 (正準順: Player → Boss → Combat) + 勝敗ポーリング
+//---------------------------------------------------------------------------
+void BossScene::updateFight(float deltaTime)
+{
+    // ボス死亡は系統より先に見る — 撃破フレームの演出 (パーティクル/SE) を
+    // 1フレーム描画させてから遷移する (旧 victoryReached の先読みと同じ順序)
+    if (m_boss->isDead())
+    {
+        m_battleFSM.changeState(BattlePhase::victory);
+        return;
+    }
+
+    // 1フレーム内の射撃インテントは Player 側で積み、Combat 側で解決して空にする
+    std::vector<WeaponShot> weaponShots;
+    if (!m_playerInputBlocked)
+    {
+        m_player->update(*m_context->input, deltaTime, weaponShots);
+    }
+
+    // 発砲SE (weaponShots は CombatSystem が解決時に空にするため、ここで見る)
+    if (!weaponShots.empty())
+    {
+        m_audioManager->playRandomSound(RIFLE_FIRE_GROUP, RIFLE_FIRE_VOLUME, RIFLE_FIRE_PITCH_JITTER);
+    }
+
+    m_boss->update(deltaTime);
+    m_bulletPool.update(deltaTime);
+    m_combatSystem.update(m_shotTargets, weaponShots);
+    m_combatSystem.resolveBullets(m_bulletPool, *m_player);
+
+    applyCombatFeedback(m_combatSystem.results());
+
+    // プレイヤー死亡は解決後に見る — 死んだそのフレームで遷移 (旧コードと同順)
+    if (m_player->isDead())
+    {
+        m_battleFSM.changeState(BattlePhase::defeat);
+    }
+}
+
+//---------------------------------------------------------------------------
+//! ビートコールバック (Synchronizer -> GameUI のフラッシュ)
 //---------------------------------------------------------------------------
 void BossScene::onBeat(int beat)
 {
     m_gameUI->triggerBeatFlash(beat);
+}
+
+//---------------------------------------------------------------------------
+//! 戦闘結果を演出へ変換します (被弾パーティクル・シェイク・SE・トレーサー)
+//! 演出位置は被弾者本人から取る (結果は誰に当たったかだけを持つ)
+//---------------------------------------------------------------------------
+void BossScene::applyCombatFeedback(const CombatResults& results)
+{
+    for (const auto& hit : results.hits)
+    {
+        if (hit.target == m_boss.get())
+        {
+            m_particleSystem->emit(m_boss->getPosition(), Vector4(0.8f, 0.0f, 1.0f, 1.0f),
+                BOSS_HIT_PARTICLE_COUNT, BOSS_HIT_PARTICLE_SPEED,
+                BOSS_HIT_PARTICLE_LIFE, BOSS_HIT_PARTICLE_SPREAD);
+
+            if (hit.died)
+            {
+                m_particleSystem->emit(m_boss->getPosition(), Vector4(0.8f, 0.0f, 1.0f, 1.0f),
+                    BOSS_DEATH_PARTICLE_COUNT, BOSS_DEATH_PARTICLE_SPEED,
+                    BOSS_DEATH_PARTICLE_LIFE, BOSS_DEATH_PARTICLE_SPREAD);
+                m_camera->triggerShake(BOSS_DEATH_SHAKE_INTENSITY, BOSS_DEATH_SHAKE_DURATION);
+                m_audioManager->playSound("death", 0.3f);
+            }
+        }
+        else if (hit.target == m_player.get())
+        {
+            m_camera->triggerShake(PLAYER_HIT_SHAKE_INTENSITY, PLAYER_HIT_SHAKE_DURATION);
+        }
+    }
+
+    for (const auto& tracer : results.tracers)
+    {
+        m_tracers->spawn(tracer.start, tracer.end, PLAYER_TRACER_COLOR);
+    }
 }
 
 //===========================================================================

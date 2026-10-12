@@ -14,7 +14,7 @@ struct SceneContext;
 //! ビューモデルの配置設定 (DebugUI から調整可能)
 struct RifleModelSettings
 {
-    float targetLength = 1.0f;    //!< 正規化後の全長 (最長辺をこの長さへスケール)
+    float targetLength = 1.5f;    //!< 正規化後の全長 (最長辺をこの長さへスケール)
     DirectX::SimpleMath::Vector3 position = DirectX::SimpleMath::Vector3(-0.015f, -0.195f, 0.180f);     //!< カメラローカル位置
     DirectX::SimpleMath::Vector3 rotationDegrees = DirectX::SimpleMath::Vector3(0.0f, 180.0f, 0.0f);    //!< 前方補正 (度)。銃口の作成時の向きをカメラ +Z へ合わせる
 };

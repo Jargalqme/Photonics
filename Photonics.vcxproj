@@ -208,6 +208,8 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Source\Common\Camera.h" />
     <ClInclude Include="Source\Common\TypeDef.h" />
+    <ClInclude Include="Source\Gameplay\Drone.h" />
+    <ClInclude Include="Source\Gameplay\DroneCamera.h" />
     <ClInclude Include="Source\Render\Pipeline\Renderer.h" />
     <ClInclude Include="Source\Render\Pipeline\UIRenderer.h" />
     <ClInclude Include="Core\StepTimer.h" />
@@ -219,10 +221,9 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Source\Gameplay\CombatResults.h" />
     <ClInclude Include="Source\Gameplay\CombatSystem.h" />
     <ClInclude Include="Source\Gameplay\ICombatTarget.h" />
-    <ClInclude Include="Source\Gameplay\EventBus.h" />
-    <ClInclude Include="Source\Gameplay\EventTypes.h" />
     <ClInclude Include="Source\Gameplay\PlayerCamera.h" />
     <ClInclude Include="Source\Render\Visuals\WaveEffect.h" />
     <ClInclude Include="Source\Render\Assets\AssimpModelImporter.h" />
@@ -236,7 +237,7 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Source\Render\Visuals\Billboard.h" />
     <ClInclude Include="Source\Render\Pipeline\Bloom.h" />
     <ClInclude Include="Source\Gameplay\BossAttackManager.h" />
-    <ClInclude Include="Source\Services\BeatTracker.h" />
+    <ClInclude Include="Source\Services\Synchronizer.h" />
     <ClInclude Include="Source\Gameplay\Bullet.h" />
     <ClInclude Include="Source\Gameplay\BulletPool.h" />
     <ClInclude Include="Source\Gameplay\CollisionSystem.h" />
@@ -259,6 +260,7 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClInclude Include="Source\Render\Visuals\ParticleSystem.h" />
     <ClInclude Include="Source\Gameplay\Player.h" />
     <ClInclude Include="Source\Gameplay\Weapon\PlayerWeapon.h" />
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponFrame.h" />
     <ClInclude Include="Source\Gameplay\Weapon\WeaponShot.h" />
     <ClInclude Include="Source\Render\Assets\MeshCache.h" />
     <ClInclude Include="Source\Render\Pipeline\RenderCommand.h" />
@@ -288,6 +290,8 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Source\Common\Camera.cpp" />
+    <ClCompile Include="Source\Gameplay\Drone.cpp" />
+    <ClCompile Include="Source\Gameplay\DroneCamera.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Renderer.cpp" />
     <ClCompile Include="Source\Render\Pipeline\UIRenderer.cpp" />
     <ClCompile Include="ImGui\imgui.cpp">
@@ -319,7 +323,6 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Source\Gameplay\CombatSystem.cpp" />
-    <ClCompile Include="Source\Gameplay\EventBus.cpp" />
     <ClCompile Include="Source\Gameplay\PlayerCamera.cpp" />
     <ClCompile Include="Source\Render\Visuals\WaveEffect.cpp" />
     <ClCompile Include="Source\Render\Assets\AssimpModelImporter.cpp" />
@@ -332,7 +335,7 @@ xcopy /Y /D "$(ProjectDir)ThirdParty\Assimp\bin\x64\Release\*.dll" "$(TargetDir)
     <ClCompile Include="Source\Render\Visuals\Billboard.cpp" />
     <ClCompile Include="Source\Render\Pipeline\Bloom.cpp" />
     <ClCompile Include="Source\Gameplay\BossAttackManager.cpp" />
-    <ClCompile Include="Source\Services\BeatTracker.cpp" />
+    <ClCompile Include="Source\Services\Synchronizer.cpp" />
     <ClCompile Include="Source\Gameplay\Bullet.cpp" />
     <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
     <ClCompile Include="Source\Gameplay\CollisionSystem.cpp" />

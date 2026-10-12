@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-class BeatTracker;
+class Synchronizer;
 class Player;
 class Dummy;
 class Boss;
@@ -30,16 +30,13 @@ public:
 
     void initialize(DX::DeviceResources* deviceResources);
 
-    //! イベント購読を登録します (EventBus::clear 後にシーンの enter から呼ぶ)
-    void subscribeEvents();
-
     //! グロー・パルスの減衰を進めます
     void update(float deltaTime);
 
     //! HUD 一式を描画します (view/proj はワールド空間バーの投影用)
     void render(const Matrix& view, const Matrix& proj);
 
-    void setBeatTracker(BeatTracker* music) { m_beatTracker = music; }
+    void setSynchronizer(Synchronizer* sync) { m_synchronizer = sync; }
     void setPlayer(Player* player) { m_player = player; }
     void setDummy(Dummy* dummy) { m_dummy = dummy; }
     void setWaveNumber(int wave) { m_currentWave = wave; }
@@ -53,7 +50,7 @@ private:
     DX::DeviceResources* m_deviceResources = nullptr;
 
     // ゲーム参照（所有しない）
-    BeatTracker* m_beatTracker = nullptr;
+    Synchronizer* m_synchronizer = nullptr;
     Player* m_player = nullptr;
     Dummy* m_dummy = nullptr;
     Boss* m_boss = nullptr;
@@ -64,7 +61,7 @@ private:
     float m_edgeGlowAlpha = 0.0f;
     float m_beatPulseAlpha = 0.0f;
 
-    int m_currentWave = 0;              //!< WaveChangedEvent で更新
+    int m_currentWave = 0;              //!< シーンが setWaveNumber で設定
     bool m_showWaveIndicator = true;    //!< トレーニングでは非表示
     ImU32 m_beatColor = IM_COL32(0, 255, 255, 255);
 

@@ -10,7 +10,7 @@
 #include "Render/Visuals/Grid.h"
 #include "Render/Visuals/Cubemap.h"
 #include "Services/AudioManager.h"
-#include "Services/BeatTracker.h"
+#include "Services/Synchronizer.h"
 #include "Gameplay/BulletPool.h"
 #include "Gameplay/Boss.h"
 #include "Render/Pipeline/Bloom.h"
@@ -586,17 +586,17 @@ void DebugUI::drawAudioPanel()
         ImGui::EndTable();
     }
 
-    DrawSubheading("Beat Tracker");
+    DrawSubheading("Synchronizer");
     if (BeginPropertyGrid("##audio_beat"))
     {
-        if (m_beatTracker)
+        if (m_synchronizer)
         {
-            DrawFormattedTextRow("Beat", "%d", m_beatTracker->getBeat());
-            DrawProgressRow("Progress", m_beatTracker->getBeatProgress(), "Beat progress");
+            DrawFormattedTextRow("Beat", "%d", m_synchronizer->getBeat());
+            DrawProgressRow("Progress", m_synchronizer->getBeatProgress(), "Beat progress");
         }
         else
         {
-            DrawUnavailableRow("Beat tracker");
+            DrawUnavailableRow("Synchronizer");
         }
         ImGui::EndTable();
     }

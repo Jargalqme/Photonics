@@ -14,10 +14,15 @@ class ICombatTarget;
 enum class HitPart
 {
     Body,
-    Head,
-    Core,
-    Armor,
     WeakPoint
+};
+
+//! applyHit の結果 (Ignored = 無敵・死亡中などで不適用)
+enum class HitOutcome
+{
+    Ignored,
+    Damaged,
+    Killed
 };
 
 //! ヒットコライダ (ターゲットが collectHitColliders で提出する当たり判定球)
@@ -29,7 +34,7 @@ struct CombatHitCollider
     float                    damageMultiplier = 1.0f;        //!< 部位別ダメージ倍率
 };
 
-//! 命中結果 (onHit に渡される確定情報)
+//! 命中結果 (applyHit に渡される確定情報)
 struct CombatHit
 {
     HitPart                       part        = HitPart::Body;                        //!< 命中部位
@@ -51,6 +56,6 @@ public:
     //! 現フレームの当たり判定球を提出します (無敵中などは何も積まない)
     virtual void collectHitColliders(std::vector<CombatHitCollider>& out) = 0;
 
-    //! 命中確定時に呼ばれます (ダメージ適用・イベント発行)
-    virtual void onHit(const CombatHit& hit) = 0;
+    //! 命中を適用します (体力減算など純粋な状態変更のみ・演出はシーンが CombatResults から行う)
+    virtual HitOutcome applyHit(const CombatHit& hit) = 0;
 };

@@ -85,7 +85,7 @@ void Camera::setProjection(float fovDegrees, float aspectRatio, float nearZ, flo
 void Camera::update()
 {
 	updateDirectionVectors();
-	updateViewMatrix();         // virtual ─ 継承先で上書きされる可能性あり
+	updateViewMatrix();
 	updateProjectionMatrix();
 }
 

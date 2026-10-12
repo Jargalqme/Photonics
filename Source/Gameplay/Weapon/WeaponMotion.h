@@ -4,17 +4,8 @@
 //---------------------------------------------------------------------------
 #pragma once
 #include "Common/Spring.h"
+#include "Gameplay/Weapon/WeaponFrame.h"
 #include "SimpleMath.h"
-
-//! 1フレーム分のモーション入力
-struct WeaponMotionInput
-{
-	float deltaTime          { 0.0f  };
-	float moveSpeed          { 0.0f  };    //!< 水平移動速度 (ワールド単位/秒)
-	bool  grounded           { true  };    //!< 接地中 (空中はボブ停止)
-	bool  isAiming           { false };
-	Vector2 lookDeltaDegrees {};           //!< 実際に適用された視点差分 (度)
-};
 
 //! モーション出力 (カメラローカル姿勢: +X右, +Y上, +Z前方)
 struct WeaponMotionOutput
@@ -54,8 +45,10 @@ struct WeaponMotionTuning
 class WeaponMotion
 {
 public:
+	WeaponMotion() { reset(); }
+
 	//! 4要素を計算して加算合成します
-	void update(const WeaponMotionInput& input);
+	void update(const PlayerWeaponFrame& frame);
 
 	//! リコイルのバネへキックを与えます (発射したフレームに呼ぶ)
 	void onFire();
@@ -69,8 +62,8 @@ public:
 private:
 	WeaponMotionOutput computeBasePose(float deltaTime, bool isAiming);
 	WeaponMotionOutput computeRecoil(float deltaTime);
-	WeaponMotionOutput computeBob(const WeaponMotionInput& input);
-	WeaponMotionOutput computeSway(const WeaponMotionInput& input);
+	WeaponMotionOutput computeBob(const PlayerWeaponFrame& frame);
+	WeaponMotionOutput computeSway(const PlayerWeaponFrame& frame);
 
 	Spring1D m_recoilZ{};                                 //!< Z後退バネ
 	Spring1D m_recoilP{.zeta = 0.6f, .omega = 30.0f};     //!< ピッチバネ (硬め・速い収束)

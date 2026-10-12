@@ -5,8 +5,6 @@
 #include "pch.h"
 #include "Gameplay/Weapon/Weapon.h"
 #include "Gameplay/Weapon/WeaponShot.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 
 //---------------------------------------------------------------------------
 //! 弾数・タイマーを初期状態に戻します
@@ -52,7 +50,6 @@ bool Weapon::update(
         {
             m_nextShotTime = m_fireInterval;
             --m_ammo;
-            EventBus::publish(WeaponShotEvent{});
             return true;
         }
     }
@@ -127,7 +124,6 @@ bool Weapon::shoot(
         tracerStart,
         m_damage,
         m_maxRange,
-        Vector4(2.0f, 4.25f, 5.0f, 1.0f),
     });
 
     return true;

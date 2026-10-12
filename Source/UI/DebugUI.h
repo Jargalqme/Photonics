@@ -9,7 +9,7 @@ class Player;
 class Grid;
 class Cubemap;
 class AudioManager;
-class BeatTracker;
+class Synchronizer;
 class PlayerCamera;
 class InputManager;
 class BulletPool;
@@ -32,7 +32,7 @@ public:
     void setGrid(Grid* grid) { m_grid = grid; }
     void setCubemap(Cubemap* cubemap) { m_cubemap = cubemap; }
     void setAudioManager(AudioManager* audio) { m_audioManager = audio; }
-    void setBeatTracker(BeatTracker* music) { m_beatTracker = music; }
+    void setSynchronizer(Synchronizer* sync) { m_synchronizer = sync; }
     void setFireRatePtr(float* fireRate) { m_fireRate = fireRate; }
     void setInputManager(InputManager* input) { m_input = input; }
     void setBulletPool(BulletPool* pool) { m_bulletPool = pool; }
@@ -61,7 +61,7 @@ private:
     Grid* m_grid = nullptr;
     Cubemap* m_cubemap = nullptr;
     AudioManager* m_audioManager = nullptr;
-    BeatTracker* m_beatTracker = nullptr;
+    Synchronizer* m_synchronizer = nullptr;
     float* m_fireRate = nullptr;
     InputManager* m_input = nullptr;
     BulletPool* m_bulletPool = nullptr;

@@ -23,7 +23,7 @@ float4 main(PS_INPUT input) : SV_TARGET
     // Scale world XZ to reasonable range for sine math
     float2 uv = input.uv * 0.012;
 
-    for (float i = 1.0; i < 8.0; i++)
+    for (float i = 1.0; i < 12.0; i++)
     {
         uv.x += 0.6 / i * cos(i * 2.5 * uv.y + Time * Speed);
         uv.y += 0.6 / i * cos(i * 1.5 * uv.x + Time * Speed);

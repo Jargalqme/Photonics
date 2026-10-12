@@ -90,7 +90,7 @@ float4 DownsampleBox13TapKaris(Texture2D tex, SamplerState samp, float2 uv, floa
     float3 L = tex.Sample(samp, uv + texelSize * float2(0.0, 2.0)).rgb;
     float3 M = tex.Sample(samp, uv + texelSize * float2(2.0, 2.0)).rgb;
 
-      // Same 5 boxes as DownsampleBox13Tap, but Karis-weighted.
+    // Same 5 boxes as DownsampleBox13Tap, but Karis-weighted.
     float3 box0 = (B + C + D + E) * 0.25; // inner  (spatial weight 0.5)
     float3 box1 = (F + G + I + A) * 0.25; // TL     (0.125)
     float3 box2 = (G + H + A + J) * 0.25; // TR

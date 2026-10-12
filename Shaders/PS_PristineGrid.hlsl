@@ -55,8 +55,6 @@ float pristineGrid(float2 uv, float2 lineWidth)
 //    float grid = pristineGrid(uv, lineWidth);
 //    float lineEmissiveIntensity = gridParams.w;
 //    float3 lineHDR = lineColor.rgb * (1.0 + lineEmissiveIntensity);
-//    //return float4(lineHDR, grid);
-    
 //    float3 color = lerp(baseColor.rgb, lineHDR, grid);
 //    return float4(color, 1.0);
 //}

@@ -6,7 +6,7 @@
 
 #include <SimpleMath.h>
 
-//! ヒットスキャン1発分のデータ
+//! ヒットスキャン1発分のデータ (トレーサー色は演出値のためシーン側が持つ)
 struct WeaponShot
 {
     DirectX::SimpleMath::Vector3 hitScanOrigin;      //!< レイ原点 (目線位置)
@@ -14,5 +14,4 @@ struct WeaponShot
     DirectX::SimpleMath::Vector3 tracerStart;        //!< トレーサー描画の始点 (銃口位置)
     float damage;                                    //!< 1発のダメージ
     float maxRange;                                  //!< 最大到達距離
-    DirectX::SimpleMath::Vector4 tracerColor;        //!< トレーサーのHDR色
 };

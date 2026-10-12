@@ -1,12 +1,10 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 //! @file   Boss.cpp
 //! @brief  ボス (3フェーズ移動 + 攻撃管理)
 //---------------------------------------------------------------------------
 #include "pch.h"
 #include "Gameplay/Boss.h"
 #include "Gameplay/BulletPool.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 #include "Gameplay/PlayerCamera.h"
 #include "Render/Visuals/ParticleSystem.h"
 #include "Services/SceneContext.h"
@@ -43,6 +41,43 @@ void Boss::initialize()
 {
     // 攻撃側の初期化は activate() で行う - この時点ではプール未接続 (setBulletPool 前)
     buildBoss();
+
+    // フェーズFSM登録 — 一度きり。ラムダは this を捕捉し実行時に m_particles / m_camera を
+    // 読むため、シーン側の配線 (initialize 後) より先に登録してよい
+    m_phaseFSM.addState(BossPhase::phase1, nullptr, [this](float dt) { updatePhase1(dt); }, nullptr);
+
+    // フェーズ2/3 は突入時 (onEnter) にパーティクル + カメラシェイクで変化を通知
+    m_phaseFSM.addState(BossPhase::phase2,
+        [this]()
+        {
+            if (m_particles)
+            {
+                m_particles->emit(m_transform.position, Vector4(2.4f, 0.0f, 4.0f, 1.0f), 50, 8.0f, 1.5f, 1.0f);
+            }
+
+            if (m_camera)
+            {
+                m_camera->triggerShake(0.5f, 0.5f);
+            }
+            m_attacks.setPhase(2);
+        },
+        [this](float dt) { updatePhase2(dt); }, nullptr);
+
+    m_phaseFSM.addState(BossPhase::phase3,
+        [this]()
+        {
+            if (m_particles)
+            {
+                m_particles->emit(m_transform.position, Vector4(2.4f, 0.0f, 4.0f, 1.0f), 80, 10.0f, 2.0f, 1.0f);
+            }
+            
+            if (m_camera)
+            {
+                m_camera->triggerShake(0.7f, 0.8f);
+            }
+            m_attacks.setPhase(3);
+        },
+        [this](float dt) { updatePhase3(dt); }, nullptr);
 }
 
 //---------------------------------------------------------------------------
@@ -92,14 +127,14 @@ void Boss::buildBoss()
 
 //---------------------------------------------------------------------------
 //! 戦闘を開始します (setBulletPool / setPlayerTarget の後に呼ぶこと)
-//! 攻撃マネージャとフェーズFSMはここで構築する
+//! 戦闘状態をリセットし phase1 から開始する (FSM登録は initialize() 済み)
 //---------------------------------------------------------------------------
 void Boss::activate()
 {
     m_transform.position = Vector3(P1_ORBIT_RADIUS, P1_HEIGHT, 0.0f);
     m_health = m_maxHealth;
     m_activated = true;
-    m_active = true;
+    m_hitFlashTimer = 0.0f;
 
     // 移動状態リセット
     m_moveAngle = 0.0f;
@@ -109,48 +144,6 @@ void Boss::activate()
     m_attacks.initialize(m_bulletPool);
     m_attacks.setPosition(m_transform.position);
     m_attacks.setPlayerTarget(m_playerTarget);
-
-    m_phaseFSM.addState(BossPhase::phase1,
-        nullptr,
-        [this](float dt) {updatePhase1(dt); },
-        nullptr);
-
-    // フェーズ2/3 は突入時 (onEnter) にパーティクル + カメラシェイクで変化を通知
-    m_phaseFSM.addState(BossPhase::phase2,
-        [this]()
-        {
-            if (m_particles)
-            {
-                m_particles->emit(m_transform.position,
-                    Vector4(2.4f, 0.0f, 4.0f, 1.0f),
-                    50, 8.0f, 1.5f, 1.0f);
-            }
-            if (m_camera)
-            {
-                m_camera->triggerShake(0.5f, 0.5f);
-            }
-            m_attacks.setPhase(2);
-        },
-        [this](float dt) {updatePhase2(dt); },
-        nullptr);
-
-    m_phaseFSM.addState(BossPhase::phase3,
-        [this]()
-        {
-            if (m_particles)
-            {
-                m_particles->emit(m_transform.position,
-                    Vector4(2.4f, 0.0f, 4.0f, 1.0f),
-                    80, 10.0f, 2.0f, 1.0f);
-            }
-            if (m_camera)
-            {
-                m_camera->triggerShake(0.7f, 0.8f);
-            }
-            m_attacks.setPhase(3);
-        },
-        [this](float dt) {updatePhase3(dt); },
-        nullptr);
 
     m_phaseFSM.changeState(BossPhase::phase1);
 }
@@ -199,30 +192,25 @@ void Boss::collectHitColliders(std::vector<CombatHitCollider>& out)
 }
 
 //---------------------------------------------------------------------------
-//! 被弾フラッシュ + 体力減算。死亡で BossDiedEvent 発行
+//! 被弾フラッシュ + 体力減算 (演出・遷移はシーンが CombatResults から行う)
 //---------------------------------------------------------------------------
-void Boss::onHit(const CombatHit& hit)
+HitOutcome Boss::applyHit(const CombatHit& hit)
 {
     if (!m_activated || isDead())
     {
-        return;
+        return HitOutcome::Ignored;
     }
 
     m_health -= hit.finalDamage;
     m_hitFlashTimer = HIT_FLASH_DURATION;
 
-    EventBus::publish(BossDamagedEvent{
-        m_transform.position,
-        hit.finalDamage,
-        std::max(m_health, 0.0f),
-        m_maxHealth });
-
     if (m_health <= 0.0f)
     {
         m_health = 0.0f;
-        m_active = false;
-        EventBus::publish(BossDiedEvent{ m_transform.position });
+        return HitOutcome::Killed;
     }
+
+    return HitOutcome::Damaged;
 }
 
 //===========================================================================

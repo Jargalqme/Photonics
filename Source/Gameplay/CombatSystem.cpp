@@ -10,8 +10,6 @@
 #include "Gameplay/CollisionSystem.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/Weapon/WeaponShot.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 
 //---------------------------------------------------------------------------
 //! ヒットスキャンを解決
@@ -20,6 +18,7 @@ void CombatSystem::update(
     std::vector<ICombatTarget*>& shotTargets,
     std::vector<WeaponShot>& weaponShots)
 {
+    m_results.clear();
     collectColliders(shotTargets, m_shotColliders);
     resolveWeaponShots(weaponShots);
 }
@@ -42,7 +41,7 @@ void CombatSystem::collectColliders(
 }
 
 //---------------------------------------------------------------------------
-//! レイ vs 球で最近傍ヒットを確定し、トレーサーイベントを発行
+//! レイ vs 球で最近傍ヒットを確定し、命中とトレーサーを結果へ積む
 //---------------------------------------------------------------------------
 void CombatSystem::resolveWeaponShots(std::vector<WeaponShot>& shots)
 {
@@ -74,10 +73,15 @@ void CombatSystem::resolveWeaponShots(std::vector<WeaponShot>& shots)
             hit.direction = shot.hitScanDirection;
             hit.rawDamage = shot.damage;
             hit.finalDamage = shot.damage * hitCollider->damageMultiplier;
-            hitCollider->target->onHit(hit);
+
+            const HitOutcome outcome = hitCollider->target->applyHit(hit);
+            if (outcome != HitOutcome::Ignored)
+            {
+                m_results.hits.push_back({ hitCollider->target, outcome == HitOutcome::Killed });
+            }
         }
 
-        EventBus::publish(ShotResolvedEvent{ shot.tracerStart, hitPoint, shot.tracerColor });
+        m_results.tracers.push_back({ shot.tracerStart, hitPoint });
     }
 
     shots.clear();
@@ -116,7 +120,13 @@ void CombatSystem::resolveBullets(BulletPool& bullets, Player& player)
                 hit.direction = arr[i].getDirection();
                 hit.rawDamage = arr[i].getDamage();
                 hit.finalDamage = arr[i].getDamage() * collider.damageMultiplier;
-                collider.target->onHit(hit);
+
+                const HitOutcome outcome = collider.target->applyHit(hit);
+                if (outcome != HitOutcome::Ignored)
+                {
+                    m_results.hits.push_back({ collider.target, outcome == HitOutcome::Killed });
+                }
+
                 arr[i].deactivate();
                 break;
             }

@@ -5,7 +5,6 @@
 #include "pch.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
 #include "Gameplay/Weapon/WeaponShot.h"
-#include "Gameplay/Weapon/Weapon.h"
 #include "Render/Pipeline/RenderCommandQueue.h"
 #include "Services/SceneContext.h"
 
@@ -13,18 +12,12 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 //---------------------------------------------------------------------------
-//! コンストラクタ (戦闘状態のみ生成、モデルは initialize でロード)
+//! コンストラクタ (モデルは initialize でロード)
 //---------------------------------------------------------------------------
 PlayerWeapon::PlayerWeapon(SceneContext& context)
     : m_context(&context)
-    , m_combat(std::make_unique<Weapon>())
 {
 }
-
-//---------------------------------------------------------------------------
-//! デストラクタ (Weapon の完全型が見えるここで定義)
-//---------------------------------------------------------------------------
-PlayerWeapon::~PlayerWeapon() = default;
 
 //---------------------------------------------------------------------------
 //! 武器モデルをロードし弾数を初期化
@@ -32,7 +25,7 @@ PlayerWeapon::~PlayerWeapon() = default;
 void PlayerWeapon::initialize()
 {
     m_model.loadRifle(*m_context, RIFLE_MODEL_PATH);
-    m_combat->initialize();
+    m_combat.initialize();
 }
 
 //---------------------------------------------------------------------------
@@ -49,7 +42,7 @@ void PlayerWeapon::finalize()
 void PlayerWeapon::reset()
 {
     m_motion.reset();
-    m_combat->initialize();
+    m_combat.initialize();
 }
 
 //---------------------------------------------------------------------------
@@ -57,7 +50,7 @@ void PlayerWeapon::reset()
 //---------------------------------------------------------------------------
 void PlayerWeapon::clearInputState()
 {
-    m_combat->stopFire();
+    m_combat.stopFire();
 }
 
 //---------------------------------------------------------------------------
@@ -66,11 +59,11 @@ void PlayerWeapon::clearInputState()
 void PlayerWeapon::update(const PlayerWeaponFrame& frame, std::vector<WeaponShot>& outShots)
 {
     applyInputToCombat(frame);
-    m_motion.update(buildMotionInput(frame));
+    m_motion.update(frame);
 
     // トレーサーは実際のマズル位置から、ヒットスキャンは目線レイで飛ばす
     const Vector3 tracerStart = getMuzzlePosition(frame.cameraWorld);
-    if (m_combat->update(
+    if (m_combat.update(
         frame.deltaTime,
         frame.hitScanOrigin,
         frame.hitScanDirection,
@@ -95,7 +88,7 @@ void PlayerWeapon::render(RenderCommandQueue& queue, const Matrix& view) const
 //---------------------------------------------------------------------------
 bool PlayerWeapon::isReloading() const
 {
-    return m_combat->isReloading();
+    return m_combat.isReloading();
 }
 
 //---------------------------------------------------------------------------
@@ -103,7 +96,7 @@ bool PlayerWeapon::isReloading() const
 //---------------------------------------------------------------------------
 int PlayerWeapon::getAmmo() const
 {
-    return m_combat->getAmmoCount();
+    return m_combat.getAmmoCount();
 }
 
 //---------------------------------------------------------------------------
@@ -111,7 +104,7 @@ int PlayerWeapon::getAmmo() const
 //---------------------------------------------------------------------------
 int PlayerWeapon::getMaxAmmo() const
 {
-    return m_combat->getClipSize();
+    return m_combat.getClipSize();
 }
 
 //---------------------------------------------------------------------------
@@ -121,31 +114,17 @@ void PlayerWeapon::applyInputToCombat(const PlayerWeaponFrame& frame)
 {
     if (frame.fireHeld)
     {
-        m_combat->startFire();
+        m_combat.startFire();
     }
     else
     {
-        m_combat->stopFire();
+        m_combat.stopFire();
     }
 
     if (frame.reloadPressed)
     {
-        m_combat->reload();
+        m_combat.reload();
     }
-}
-
-//---------------------------------------------------------------------------
-//! フレーム入力からモーション入力を組み立てる
-//---------------------------------------------------------------------------
-WeaponMotionInput PlayerWeapon::buildMotionInput(const PlayerWeaponFrame& frame) const
-{
-    WeaponMotionInput input;
-    input.deltaTime = frame.deltaTime;
-    input.lookDeltaDegrees = frame.viewDeltaDegrees;
-    input.moveSpeed = frame.moveSpeed;
-    input.grounded = frame.isGrounded;
-    input.isAiming = frame.adsHeld;
-    return input;
 }
 
 //---------------------------------------------------------------------------

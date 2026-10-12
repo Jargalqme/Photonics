@@ -20,10 +20,11 @@
 #include "Render/Lighting/SceneLighting.h"
 #include "Render/Visuals/Tracers.h"
 #include "Services/AudioManager.h"
-#include "Services/BeatTracker.h"
+#include "Services/Synchronizer.h"
 #include "UI/GameUI.h"
 #include "UI/DebugUI.h"
 #include "Scenes/SceneManager.h"
+#include "Common/StateMachine.h"
 
 #include <cstdint>
 #include <memory>
@@ -32,9 +33,15 @@
 class PlayerCamera;
 class ImportedModel;
 
+//! バトルフロー (シーン内進行はシーン所有の FSM が持つ)
+enum class BattlePhase
+{
+    intro, fight, victory, defeat
+};
+
 //===========================================================================
 //! ボス戦シーン
-//! ゲームの本編。EventBus で VFX・SE・シェイクを配線し、
+//! ゲームの本編。CombatResults を VFX・SE・シェイクへ変換し、
 //! 勝敗判定で Victory / GameOver へ遷移する
 //===========================================================================
 class BossScene : public Scene
@@ -52,18 +59,6 @@ public:
     void render() override;
 
 private:
-    static constexpr int   IMPACT_PARTICLE_COUNT   = 30;
-    static constexpr float IMPACT_PARTICLE_SPEED   = 6.0f;
-    static constexpr float IMPACT_PARTICLE_LIFE    = 0.4f;
-    static constexpr float IMPACT_PARTICLE_SPREAD  = 0.8f;
-
-    static constexpr int   DEATH_PARTICLE_COUNT    = 200;
-    static constexpr float DEATH_PARTICLE_SPEED    = 8.0f;
-    static constexpr float DEATH_PARTICLE_LIFE     = 1.5f;
-    static constexpr float DEATH_PARTICLE_SPREAD   = 1.0f;
-
-    static constexpr float KILL_SHAKE_INTENSITY       = 0.15f;
-    static constexpr float KILL_SHAKE_DURATION        = 0.2f;
     static constexpr float PLAYER_HIT_SHAKE_INTENSITY = 0.35f;
     static constexpr float PLAYER_HIT_SHAKE_DURATION  = 0.15f;
 
@@ -79,7 +74,13 @@ private:
     static constexpr float BOSS_DEATH_SHAKE_INTENSITY = 1.0f;
     static constexpr float BOSS_DEATH_SHAKE_DURATION  = 1.0f;
 
+    static constexpr float INTRO_DURATION = 0.0f;    //!< intro の "BOSS" バナー表示秒数
+
     SceneManager* m_sceneManager = nullptr;
+
+    StateMachine<BattlePhase> m_battleFSM;    //!< intro -> fight -> victory/defeat (遷移は isDead() のポーリングで決める)
+    float m_introTimer = 0.0f;                //!< intro の経過秒数
+    bool  m_playerInputBlocked = false;       //!< フレーム冒頭で update() が設定 (デバッグモード中は入力停止)
 
     std::unique_ptr<PlayerCamera> m_camera;
     std::unique_ptr<Player> m_player;
@@ -96,7 +97,7 @@ private:
     SceneLighting m_lighting;
 
     std::unique_ptr<AudioManager> m_audioManager;
-    std::unique_ptr<BeatTracker> m_beatTracker;   //!< 音楽のビート追跡 (グリッドパルス・UIフラッシュ)
+    std::unique_ptr<Synchronizer> m_synchronizer;   //!< 音楽のビート追跡 (グリッドパルス・UIフラッシュ)
 
     std::unique_ptr<Grid> m_grid;
     std::unique_ptr<WaveEffect> m_waveEffect;
@@ -107,8 +108,15 @@ private:
     std::unique_ptr<DebugUI> m_debugUI;
     bool m_debugMode = false;                     //!< F3 でトグル (カーソル解放 + DebugUI 表示)
 
-    //! ビートコールバック (BeatTracker -> GameUI のフラッシュ)
+    //! ビートコールバック (Synchronizer -> GameUI のフラッシュ)
     void onBeat(int beat);
+
+    //! 戦闘結果を演出へ変換します (被弾パーティクル・シェイク・SE・トレーサー)
+    void applyCombatFeedback(const CombatResults& results);
+
+    //! バトルフローの各ステート更新 (m_battleFSM から呼び分け)
+    void updateIntro(float deltaTime);
+    void updateFight(float deltaTime);
 
     // レンダーパス (render から呼ぶ順)
     void renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos);

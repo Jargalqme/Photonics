@@ -111,7 +111,7 @@
     <ClInclude Include="ThirdParty\FastNoiseLite.h" />
     <ClInclude Include="Source\Render\Visuals\Grid.h" />
     <ClInclude Include="Source\Gameplay\Dummy.h" />
-    <ClInclude Include="Source\Services\BeatTracker.h" />
+    <ClInclude Include="Source\Services\Synchronizer.h" />
     <ClInclude Include="Source\Common\StateMachine.h" />
     <ClInclude Include="Source\Common\Easing.h" />
     <ClInclude Include="Source\Gameplay\Bullet.h" />
@@ -137,6 +137,9 @@
     <ClInclude Include="Source\Gameplay\Weapon\WeaponShot.h">
       <Filter>Weapon</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Gameplay\Weapon\WeaponFrame.h">
+      <Filter>Weapon</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Render\Pipeline\RenderCommand.h" />
     <ClInclude Include="Source\Render\Pipeline\RenderCommandQueue.h" />
     <ClInclude Include="Source\Gameplay\ICombatTarget.h" />
@@ -144,9 +147,8 @@
     <ClInclude Include="Source\Render\Assets\ImportedModel.h" />
     <ClInclude Include="Source\Render\Assets\ImportedModelCache.h" />
     <ClInclude Include="Source\Render\Assets\LayoutLoader.h" />
+    <ClInclude Include="Source\Gameplay\CombatResults.h" />
     <ClInclude Include="Source\Gameplay\CombatSystem.h" />
-    <ClInclude Include="Source\Gameplay\EventBus.h" />
-    <ClInclude Include="Source\Gameplay\EventTypes.h" />
     <ClInclude Include="Source\Render\Pipeline\SceneRenderer.h" />
     <ClInclude Include="Source\Render\Pipeline\FinalCompositePass.h" />
     <ClInclude Include="Source\Gameplay\PlayerCamera.h" />
@@ -156,6 +158,8 @@
     <ClInclude Include="Source\Render\Lighting\SceneLighting.h" />
     <ClInclude Include="Source\Common\Camera.h" />
     <ClInclude Include="Source\Common\TypeDef.h" />
+    <ClInclude Include="Source\Gameplay\Drone.h" />
+    <ClInclude Include="Source\Gameplay\DroneCamera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Services\InputManager.cpp" />
@@ -236,7 +240,7 @@
     <ClCompile Include="Source\Gameplay\Boss.cpp" />
     <ClCompile Include="Source\Render\Visuals\Grid.cpp" />
     <ClCompile Include="Source\Gameplay\Dummy.cpp" />
-    <ClCompile Include="Source\Services\BeatTracker.cpp" />
+    <ClCompile Include="Source\Services\Synchronizer.cpp" />
     <ClCompile Include="Source\Gameplay\Bullet.cpp" />
     <ClCompile Include="Source\Gameplay\BulletPool.cpp" />
     <ClCompile Include="Source\Render\Visuals\ParticleSystem.cpp" />
@@ -261,7 +265,6 @@
     <ClCompile Include="Source\Render\Assets\ImportedModelCache.cpp" />
     <ClCompile Include="Source\Render\Assets\LayoutLoader.cpp" />
     <ClCompile Include="Source\Gameplay\CombatSystem.cpp" />
-    <ClCompile Include="Source\Gameplay\EventBus.cpp" />
     <ClCompile Include="Source\Render\Pipeline\SceneRenderer.cpp" />
     <ClCompile Include="Source\Render\Pipeline\FinalCompositePass.cpp" />
     <ClCompile Include="Source\Gameplay\PlayerCamera.cpp" />
@@ -269,6 +272,8 @@
     <ClCompile Include="Source\Render\Assets\PrimitiveMesh.cpp" />
     <ClCompile Include="Source\Render\Assets\PBRMaterialLoader.cpp" />
     <ClCompile Include="Source\Common\Camera.cpp" />
+    <ClCompile Include="Source\Gameplay\Drone.cpp" />
+    <ClCompile Include="Source\Gameplay\DroneCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />

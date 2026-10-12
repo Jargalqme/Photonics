@@ -7,8 +7,6 @@
 #include "Gameplay/PlayerCamera.h"
 #include "DeviceResources.h"
 #include "Gameplay/Weapon/WeaponShot.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
 #include "Render/Pipeline/Renderer.h"
 #include "Render/Pipeline/Bloom.h"
@@ -22,6 +20,8 @@ namespace
     constexpr float RIFLE_FIRE_VOLUME = 0.35f;
     constexpr float RIFLE_FIRE_PITCH_JITTER = 0.015f;
     constexpr const wchar_t* ENVIRONMENT_LAYOUT_PATH = L"Environment/environment.json";
+
+    const Vector4 PLAYER_TRACER_COLOR(2.0f, 4.25f, 5.0f, 1.0f);    //!< トレーサーのHDR色 (ブルームで発光)
 
     //---------------------------------------------------------------------------
     //! 発射音グループをロード (バリエーション不在時は単発SEへフォールバック)
@@ -101,6 +101,9 @@ void TrainingScene::initialize(SceneContext& context)
     m_grid = std::make_unique<Grid>(*m_context);
     m_grid->initialize();
 
+    m_cubemap = std::make_unique<Cubemap>(m_deviceResources);
+    m_cubemap->initialize();
+
     LayoutLoader::loadLayout(
         *m_context,
         getAssetPathString(ENVIRONMENT_LAYOUT_PATH),
@@ -132,45 +135,16 @@ void TrainingScene::initialize(SceneContext& context)
 //===========================================================================
 
 //---------------------------------------------------------------------------
-//! イベント購読の再登録 + ゲーム状態リセット
-//! EventBus は exit で clear されるため、購読はここで毎回登録し直す
+//! ゲーム状態リセット
 //---------------------------------------------------------------------------
 void TrainingScene::enter()
 {
     Scene::enter();
-    EventBus::clear();
     m_debugMode = false;
     if (m_context && m_context->input)
     {
         m_context->input->setCursorVisible(false);
     }
-
-    m_gameUI->subscribeEvents();
-
-    // ダミー命中 → 衝撃パーティクル
-    EventBus::subscribe<DummyHitEvent>([this](const DummyHitEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(1.0f, 0.8f, 0.2f, 1.0f),
-            IMPACT_PARTICLE_COUNT, IMPACT_PARTICLE_SPEED,
-            IMPACT_PARTICLE_LIFE, IMPACT_PARTICLE_SPREAD);
-    });
-
-    // Weapon shot audio.
-    EventBus::subscribe<WeaponShotEvent>([this](const WeaponShotEvent&) {
-        m_audioManager->playRandomSound(RIFLE_FIRE_GROUP, RIFLE_FIRE_VOLUME, RIFLE_FIRE_PITCH_JITTER);
-    });
-
-    // ヒットスキャン解決 → トレーサー
-    EventBus::subscribe<ShotResolvedEvent>([this](const ShotResolvedEvent& event) {
-        m_tracers->spawn(event.tracerStart, event.hitPoint, event.color);
-    });
-
-    // ダミー撃破 → 爆発パーティクル + シェイク
-    EventBus::subscribe<DummyDiedEvent>([this](const DummyDiedEvent& event) {
-        m_particleSystem->emit(event.position, Vector4(1.0f, 0.3f, 0.1f, 1.0f),
-            DEATH_PARTICLE_COUNT, DEATH_PARTICLE_SPEED,
-            DEATH_PARTICLE_LIFE, DEATH_PARTICLE_SPREAD);
-        m_camera->triggerShake(KILL_SHAKE_INTENSITY, KILL_SHAKE_DURATION);
-    });
 
     // プレイヤーリセット
     m_player->reset();
@@ -189,12 +163,11 @@ void TrainingScene::enter()
 }
 
 //---------------------------------------------------------------------------
-//! 購読解除 + カメラ・ブルームを返却
+//! カメラ・ブルームを返却
 //---------------------------------------------------------------------------
 void TrainingScene::exit()
 {
     Scene::exit();
-    EventBus::clear();
 
     if (m_renderer)
     {
@@ -208,12 +181,13 @@ void TrainingScene::exit()
 //---------------------------------------------------------------------------
 void TrainingScene::finalize()
 {
-    if (m_grid) { m_grid->finalize(); }
-    if (m_player) { m_player->finalize(); }
+    if (m_grid)           { m_grid->finalize(); }
+    if (m_cubemap)        { m_cubemap->finalize(); }
+    if (m_player)         { m_player->finalize(); }
     if (m_particleSystem) { m_particleSystem->finalize(); }
-    if (m_tracers) { m_tracers->finalize(); }
-    if (m_dummy) { m_dummy->finalize(); }
-    m_camera->finalize();
+    if (m_tracers)        { m_tracers->finalize(); }
+    if (m_dummy)          { m_dummy->finalize(); }
+    if (m_camera)         { m_camera->finalize(); }
 
     m_dummy.reset();
     m_particleSystem.reset();
@@ -221,6 +195,7 @@ void TrainingScene::finalize()
     m_camera.reset();
     m_player.reset();
     m_grid.reset();
+    m_cubemap.reset();
     m_audioManager.reset();
     m_debugUI.reset();
 }
@@ -230,7 +205,7 @@ void TrainingScene::finalize()
 //===========================================================================
 
 //---------------------------------------------------------------------------
-//! 入力 -> ゲームプレイ系統 -> イベント配信 -> カメラ -> サブシステム
+//! 入力 -> ゲームプレイ系統 -> 戦闘結果の演出変換 -> カメラ -> サブシステム
 //---------------------------------------------------------------------------
 void TrainingScene::update(float deltaTime, InputManager* input)
 {
@@ -261,26 +236,64 @@ void TrainingScene::update(float deltaTime, InputManager* input)
 
     // === ゲームプレイ系統（正準順: Player → Dummy → Combat → Camera）===
     std::vector<WeaponShot> weaponShots;
-    if (!m_debugMode && !debugToggledThisFrame)
+    const bool gameplayActive = !m_debugMode && !debugToggledThisFrame;
+    if (gameplayActive)
     {
         m_player->update(*input, deltaTime, weaponShots);
+    }
+
+    // 発砲SE (weaponShots は CombatSystem が解決時に空にするため、ここで見る)
+    if (!weaponShots.empty())
+    {
+        m_audioManager->playRandomSound(RIFLE_FIRE_GROUP, RIFLE_FIRE_VOLUME, RIFLE_FIRE_PITCH_JITTER);
     }
 
     m_dummy->update(deltaTime);
 
     m_combatSystem.update(m_shotTargets, weaponShots);
 
-    EventBus::dispatchQueued();
+    applyCombatFeedback(m_combatSystem.results());
 
+    // FPS カメラは常に更新する (射撃方向がここから出るため)
     m_camera->update(*m_player, deltaTime);
     m_camera->updateConstants();
-
+   
     // === サブシステム ===
     m_gameUI->update(deltaTime);
     m_audioManager->update();
     m_particleSystem->update(deltaTime);
     m_tracers->update(deltaTime);
     m_grid->update();
+}
+
+//---------------------------------------------------------------------------
+//! 戦闘結果を演出へ変換します (被弾パーティクル・シェイク・トレーサー)
+//! 演出位置は被弾者本人から取る (結果は誰に当たったかだけを持つ)
+//---------------------------------------------------------------------------
+void TrainingScene::applyCombatFeedback(const CombatResults& results)
+{
+    for (const auto& hit : results.hits)
+    {
+        if (hit.target == m_dummy.get())
+        {
+            m_particleSystem->emit(m_dummy->getPosition(), Vector4(1.0f, 0.8f, 0.2f, 1.0f),
+                IMPACT_PARTICLE_COUNT, IMPACT_PARTICLE_SPEED,
+                IMPACT_PARTICLE_LIFE, IMPACT_PARTICLE_SPREAD);
+
+            if (hit.died)
+            {
+                m_particleSystem->emit(m_dummy->getPosition(), Vector4(1.0f, 0.3f, 0.1f, 1.0f),
+                    DEATH_PARTICLE_COUNT, DEATH_PARTICLE_SPEED,
+                    DEATH_PARTICLE_LIFE, DEATH_PARTICLE_SPREAD);
+                m_camera->triggerShake(KILL_SHAKE_INTENSITY, KILL_SHAKE_DURATION);
+            }
+        }
+    }
+
+    for (const auto& tracer : results.tracers)
+    {
+        m_tracers->spawn(tracer.start, tracer.end, PLAYER_TRACER_COLOR);
+    }
 }
 
 //===========================================================================
@@ -311,6 +324,7 @@ void TrainingScene::render()
 //---------------------------------------------------------------------------
 void TrainingScene::renderWorld(const Matrix& view, const Matrix& proj, const Vector3& camPos)
 {
+    m_cubemap->render();
     m_grid->render(view, proj);
 
     m_renderQueue.clear();

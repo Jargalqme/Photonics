@@ -48,8 +48,8 @@ public:
     //! 非アクティブ中は何も積まない = 撃てない
     void collectHitColliders(std::vector<CombatHitCollider>& out) override;
 
-    //! 被弾フラッシュ + 体力減算。死亡でリスポーン予約とイベント発行
-    void onHit(const CombatHit& hit) override;
+    //! 被弾フラッシュ + 体力減算。死亡でリスポーン予約 (演出はシーンが CombatResults から行う)
+    HitOutcome applyHit(const CombatHit& hit) override;
 
     //!@}
     //----------------------------------------------------------

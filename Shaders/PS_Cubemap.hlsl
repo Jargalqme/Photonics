@@ -3,18 +3,19 @@
 //! @brief  Cubemap background sample
 //---------------------------------------------------------------------------
 
-TextureCube cubemapTexture  : register(t0);
+TextureCube  cubemapTexture : register(t0);
 SamplerState cubemapSampler : register(s0);
 
 struct PS_INPUT
 {
-    float4 position : SV_POSITION;
+    float4 position  : SV_Position;
     float3 direction : TEXCOORD0;
 };
 
 float4 main(PS_INPUT input) : SV_TARGET
 {
-    float3 dir = normalize(input.direction);
-    float4 color = cubemapTexture.Sample(cubemapSampler, dir);
-    return float4(color.rgb * 0.5, color.a);
+    // Prefiltered cube: mips encode roughness, not image detail.
+    // The background must read mip 0 explicity (mirror-sharp radiance).
+    float3 color = cubemapTexture.SampleLevel(cubemapSampler, input.direction, 0).rgb;
+    return float4(color, 1.0);
 }

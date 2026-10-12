@@ -4,8 +4,6 @@
 //---------------------------------------------------------------------------
 #include "pch.h"
 #include "Gameplay/Player.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 #include "Gameplay/Weapon/PlayerWeapon.h"
 #include "Services/SceneContext.h"
 #include "Services/InputManager.h"
@@ -266,21 +264,17 @@ void Player::collectHitColliders(std::vector<CombatHitCollider>& out)
 }
 
 //---------------------------------------------------------------------------
-//! 被弾を体力へ反映し PlayerDamagedEvent を発行
+//! 被弾を体力へ反映し無敵時間を開始 (演出・遷移はシーンが CombatResults から行う)
 //---------------------------------------------------------------------------
-void Player::onHit(const CombatHit& hit)
+HitOutcome Player::applyHit(const CombatHit& hit)
 {
     if (isDead() || isInvincible())
     {
-        return;
+        return HitOutcome::Ignored;
     }
 
     takeDamage(hit.finalDamage);
-    EventBus::publish(PlayerDamagedEvent{
-        m_rootPosition,
-        hit.finalDamage,
-        m_health,
-        m_maxHealth });
+    return isDead() ? HitOutcome::Killed : HitOutcome::Damaged;
 }
 
 //---------------------------------------------------------------------------

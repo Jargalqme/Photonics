@@ -4,12 +4,10 @@
 //---------------------------------------------------------------------------
 #include "pch.h"
 #include "UI/GameUI.h"
-#include "Services/BeatTracker.h"
+#include "Services/Synchronizer.h"
 #include "Gameplay/Player.h"
 #include "Gameplay/Dummy.h"
 #include "Gameplay/Boss.h"
-#include "Gameplay/EventBus.h"
-#include "Gameplay/EventTypes.h"
 #include <imgui.h>
 
 GameUI::GameUI()
@@ -19,16 +17,6 @@ GameUI::GameUI()
 void GameUI::initialize(DX::DeviceResources* deviceResources)
 {
     m_deviceResources = deviceResources;
-}
-
-//---------------------------------------------------------------------------
-//! イベント購読を登録します
-//---------------------------------------------------------------------------
-void GameUI::subscribeEvents()
-{
-    EventBus::subscribe<WaveChangedEvent>([this](const WaveChangedEvent& event) {
-        setWaveNumber(event.waveNumber);
-    });
 }
 
 //===========================================================================

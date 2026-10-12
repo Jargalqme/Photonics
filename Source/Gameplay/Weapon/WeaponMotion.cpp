@@ -26,14 +26,14 @@ namespace
 //---------------------------------------------------------------------------
 //! 基本姿勢 + リコイル + ボブ + スウェイ を加算合成
 //---------------------------------------------------------------------------
-void WeaponMotion::update(const WeaponMotionInput& input)
+void WeaponMotion::update(const PlayerWeaponFrame& frame)
 {
-	const float deltaTime = std::max(input.deltaTime, 0.0f);
+	const float deltaTime = std::max(frame.deltaTime, 0.0f);
 
-	WeaponMotionOutput base   = computeBasePose(deltaTime, input.isAiming);
+	WeaponMotionOutput base   = computeBasePose(deltaTime, frame.adsHeld);
 	WeaponMotionOutput recoil = computeRecoil(deltaTime);
-	WeaponMotionOutput bob    = computeBob(input);
-	WeaponMotionOutput sway   = computeSway(input);
+	WeaponMotionOutput bob    = computeBob(frame);
+	WeaponMotionOutput sway   = computeSway(frame);
 
 	m_composed.position = base.position + recoil.position + bob.position + sway.position;
 	m_composed.rotation = base.rotation + recoil.rotation + bob.rotation + sway.rotation;
@@ -60,7 +60,10 @@ void WeaponMotion::reset()
 	m_bobAmount    = 0.0f;
 	m_swayPosition = {};
 	m_swayRotation = {};
-	m_composed     = {};
+
+	// update() 未実行でも描画されるため、腰だめ姿勢を初期値にする
+	// (ゼロは「姿勢なし」であって「静止姿勢」ではない)
+	m_composed = { m_tuning.hipPosition, Vector3::Zero };
 }
 
 //---------------------------------------------------------------------------
@@ -90,13 +93,13 @@ WeaponMotionOutput WeaponMotion::computeRecoil(float deltaTime)
 //---------------------------------------------------------------------------
 //! 歩行ボブ (X = sin, Y = 2倍周波数の cos -> 8の字軌道)
 //---------------------------------------------------------------------------
-WeaponMotionOutput WeaponMotion::computeBob(const WeaponMotionInput& input)
+WeaponMotionOutput WeaponMotion::computeBob(const PlayerWeaponFrame& frame)
 {
 	constexpr float kMaxSpeed = 15.0f;    // ボブが最大になる移動速度
-	float speedN = std::clamp(input.moveSpeed / kMaxSpeed, 0.0f, 1.0f);
-	float target = (input.grounded && speedN > 0.05f) ? speedN : 0.0f;
+	float speedN = std::clamp(frame.moveSpeed / kMaxSpeed, 0.0f, 1.0f);
+	float target = (frame.isGrounded && speedN > 0.05f) ? speedN : 0.0f;
 
-	float dt = std::max(input.deltaTime, 0.0f);
+	float dt = std::max(frame.deltaTime, 0.0f);
 	m_bobAmount += (target - m_bobAmount) * std::min(1.0f, m_tuning.bobFalloff * dt);
 	m_bobPhase += m_tuning.bobFrequency * speedN * dt;
 
@@ -109,13 +112,13 @@ WeaponMotionOutput WeaponMotion::computeBob(const WeaponMotionInput& input)
 //---------------------------------------------------------------------------
 //! 視点差分の逆方向へドリフトし、復帰速度で追いつく (遅れて付いてくる演出)
 //---------------------------------------------------------------------------
-WeaponMotionOutput WeaponMotion::computeSway(const WeaponMotionInput& input)
+WeaponMotionOutput WeaponMotion::computeSway(const PlayerWeaponFrame& frame)
 {
-	float dt = std::max(input.deltaTime, 0.0f);
+	float dt = std::max(frame.deltaTime, 0.0f);
 	float maxDelta = std::max(m_tuning.swayMaxDeltaDeg, 0.0f);
 
-	float yaw = std::clamp(input.lookDeltaDegrees.x, -maxDelta, maxDelta);
-	float pitch = std::clamp(input.lookDeltaDegrees.y, -maxDelta, maxDelta);
+	float yaw = std::clamp(frame.viewDeltaDegrees.x, -maxDelta, maxDelta);
+	float pitch = std::clamp(frame.viewDeltaDegrees.y, -maxDelta, maxDelta);
 
 	Vector3 targetPos(-yaw * m_tuning.swayPositionGain, -pitch * m_tuning.swayPositionGain, 0.0f);
 	Vector3 targetRot(-pitch * m_tuning.swayRotationGain, -yaw * m_tuning.swayRotationGain, 0.0f);

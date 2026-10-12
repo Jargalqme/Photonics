@@ -115,8 +115,8 @@ public:
     //! 死亡・無敵中は何も積まない = その間は被弾しない (無敵時間の実装)
     void collectHitColliders(std::vector<CombatHitCollider>& out) override;
 
-    //! 被弾を体力へ反映し PlayerDamagedEvent を発行
-    void onHit(const CombatHit& hit) override;
+    //! 被弾を体力へ反映し無敵時間を開始 (演出・遷移はシーンが CombatResults から行う)
+    HitOutcome applyHit(const CombatHit& hit) override;
 
     //!@}
 
